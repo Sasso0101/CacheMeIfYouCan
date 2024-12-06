@@ -1,5 +1,5 @@
 ## Instructions
-A C++ compiler supporting C++17 or later is required to build the project. The project can be built using the provided `Makefile` by running `make` in the project directory. The `make` targets are listed in the table below.
+A C++ compiler supporting C++17 or later is required to build the project. The project can be built by running `make` in the project directory. The `make` targets are listed in the table below.
 
 ## Datasets
 | Make target | Dataset           | `\|V\|` | `\|E\|` | Notes          | Source    |
