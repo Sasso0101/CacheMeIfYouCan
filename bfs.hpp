@@ -1,3 +1,4 @@
+#include <bitset>
 #include <cmath>
 #include <iostream>
 #include <queue>
@@ -9,7 +10,7 @@ typedef uint64_t eidType;
 typedef uint64_t weight_type;
 
 class BaseGraph {
- public:
+public:
   virtual ~BaseGraph() {}
   virtual void BFS(vidType source, weight_type *distances) = 0;
 };
@@ -20,7 +21,7 @@ class Graph : public BaseGraph {
   [[maybe_unused]] uint64_t N;
   [[maybe_unused]] uint64_t M;
 
- public:
+public:
   Graph(eidType *rowptr, vidType *col, uint64_t N, uint64_t M)
       : rowptr(rowptr), col(col), N(N), M(M) {}
   ~Graph() {
@@ -50,28 +51,70 @@ class Graph : public BaseGraph {
   }
 };
 
+template <typename T>
+uint64_t binary_search(T *arr, uint64_t start, uint64_t end, T value) {
+  uint64_t mid = (start + end) / 2;
+  while (start < end) {
+    if (arr[mid] == value) {
+      return mid;
+    } else if (arr[mid] < value) {
+      start = mid + 1;
+    } else {
+      end = mid;
+    }
+    mid = (start + end) / 2;
+  }
+  return start;
+}
+
+void remove_node_degree_1(eidType *rowptr, vidType *col, vidType v, eidType neighbor) {
+  // Remove the node from the neighbor's adjacency list
+  uint64_t to_remove = binary_search(col, rowptr[neighbor], rowptr[neighbor + 1]-1, v);
+  std::cout << "Start " << rowptr[neighbor] << " end " << rowptr[neighbor + 1]-1 << std::endl;
+  std::cout << "Removed node " << v << " marking " << col[to_remove] << std::endl;
+  col[to_remove] = -1;
+}
+
+void print_graph(eidType *rowptr, vidType *col, uint64_t N, uint64_t M) {
+  for (uint64_t i = 0; i < N; i++) {
+    for (uint64_t j = rowptr[i]; j < rowptr[i+1]; j++) {
+      std::cout << i << " (j: " << j << ") " << col[j] << std::endl;
+    }
+  }
+}
+
 BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
                             uint64_t M) {
   std::unordered_multiset<eidType> to_check;
   uint64_t removed = 0;
-  for (uint64_t i = 0; i < N; i++) {
-    // Tree detected
-    if (rowptr[i + 1] - rowptr[i] == 1) {
-      to_check.insert(col[rowptr[i]]);
-      rowptr[i] = -1;
+  // Remove nodes with only one neighbor
+  for (uint64_t v = 0; v < N; v++) {
+    if (rowptr[v + 1] - rowptr[v] == 1) {
+      eidType neighbor = col[rowptr[v]];
+      // Insert the neighbor into the set of nodes because it may be removed
+      to_check.insert(neighbor);
+      remove_node_degree_1(rowptr, col, v, neighbor);
       removed++;
     }
   }
 
-  for (auto v = to_check.begin(); v != to_check.end();) {
-    uint64_t count = to_check.count(*v);
-    if (rowptr[*v + 1] - rowptr[*v] == count) {
-      for (uint64_t i = rowptr[*v]; i < rowptr[*v + 1]; i++) {
-        col[rowptr[i]] = -1;
-      }
+  // Continue removing nodes with only one neighbor
+  while (to_check.size() > 0) {
+    vidType v = *to_check.begin();
+    uint64_t removed_neighbors = to_check.count(v);
+    to_check.erase(v);
+    if (rowptr[v+1] - rowptr[v] == removed_neighbors + 1) {
       removed++;
+      // Find the neighbor
+      for (uint64_t i = rowptr[v]; i < rowptr[v + 1]; i++) {
+        if (col[i] != -1) {
+          vidType neighbor = col[i];
+          to_check.insert(neighbor);
+          remove_node_degree_1(rowptr, col, v, neighbor);
+          break;
+        }
+      }
     }
-    std::advance(v, count);
   }
   std::cout << "Removed " << removed << " nodes" << std::endl;
 

@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
   // Load graph from file. The file has format i j, where i and j are the nodes of the edge
   const u_int64_t N = std::stoi(argv[2]);
   const u_int64_t M = std::stoi(argv[3]);
-  eidType* rowptr = new eidType[N]{};
+  eidType* rowptr = new eidType[N+1]{};
   vidType* col = new vidType[M]{};
   eidType i;
   vidType j;
@@ -25,21 +25,10 @@ int main(int argc, char **argv) {
   while (file >> i >> j) {
     col[free] = j;
     free += 1;
-    if (i < N - 1) {
-      rowptr[i+1] = free;
-    }
+    rowptr[i+1] = free;
   }
 
+  // print_graph(rowptr, col, N, M);
   initialize_graph(rowptr, col, N, M);
-
-  // Print graph to cout
-  /*for (uint64_t i = 0; i < N; i++) {
-    uint64_t last = rowptr[i + 1];
-    if (i == N -1) {
-      last = M;
-    }
-    for (uint64_t j = rowptr[i]; j < last; j++) {
-      std::cout << i << " " << col[j] << std::endl;
-    }
-  }*/
+  print_graph(rowptr, col, N, M);
 }

@@ -18,7 +18,10 @@ clean:
 facebook: compile
 	./main.out facebook_combined.txt 4039 88234
 
-small: compile
+random: compile
 	./main.out random_1k_5k.txt 1000 9940
+
+test: compile
+	./main.out test.txt 11 25
 
 .PHONY: all clean run
