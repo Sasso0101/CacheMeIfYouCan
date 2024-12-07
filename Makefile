@@ -12,7 +12,7 @@ compile:
 
 # Clean rule
 clean:
-	rm -f *.o
+	rm -f *.out
 
 # Run the program with parameters
 facebook: compile
