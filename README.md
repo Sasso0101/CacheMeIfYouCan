@@ -1,5 +1,5 @@
 ## Instructions
-The `g++` compiler supporting C++11 or later is required to build the project. The project can be built by running `make` in the project directory. The `make` targets are listed in the table below.
+Run `make` in the project directory to build the project. The `make` targets are listed in the table below.
 
 ## Datasets
 | Make target | Dataset           | `\|V\|` | `\|E\|` | Notes          | Source    |
