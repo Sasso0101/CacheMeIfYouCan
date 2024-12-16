@@ -9,7 +9,7 @@ To run the project, you need to build it first. After building the project, run 
 cd build
 make <target>
 ```
-The make target selects the dataset to use. The available targets are listed in the Datasets section.
+The make target selects the dataset to use. The available targets are listed in the Datasets section. The program computes the distance from the source node to all other nodes in the graph. The output is written to a file named `*_distances.out` in the root directory.
 
 ## Datasets
 | Make target | Dataset           | `\|V\|` | `\|E\|` | Notes          | Source    |
@@ -18,9 +18,10 @@ The make target selects the dataset to use. The available targets are listed in 
 | random      | random_1k_5k      | 1000    | 9940    | Small diameter | Speedcode |
 | powergrid   | USpowergrid_n4941 | 4942    | 13190   | Small diameter | [^1]      |
 
+[^1]: [https://toreopsahl.com/datasets/#uspowergrid).
+
 ## Graphs
 | ![Test graph](docs/test_graph.png) | 
 |:--:| 
 | *Test graph* |
 
-[^1]: [https://toreopsahl.com/datasets/#uspowergrid).
