@@ -1,7 +1,6 @@
 ## Instructions
 To build the project, you need cmake (>=3.10) and a C++17 compiler. Clone the repository and run the following commands in the project's root directory:
 ```bash
-mkdir build
 cmake -B build
 cd build
 make <target>
