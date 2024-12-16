@@ -1,12 +1,22 @@
 ## Instructions
-Run `make` in the project directory to build the project. The `make` targets are listed in the table below.
+To build the project, you need cmake (>=3.10) and a C++17 compiler. Clone the repository and run the following commands in the project's root directory:
+```bash
+mkdir build
+cmake -B build
+cd build
+make <target>
+```
+The make target selects the dataset to use. The available targets are listed in the Datasets section.
 
 ## Datasets
 | Make target | Dataset           | `\|V\|` | `\|E\|` | Notes          | Source    |
 |-------------|-------------------|---------|---------|----------------|-----------|
-| test        | test              | 11      | 25      | Handcrafted    |           |
+| test        | test              | 11      | 26      | Handcrafted    |           |
 | random      | random_1k_5k      | 1000    | 9940    | Small diameter | Speedcode |
-| facebook    | facebook_combined | 4039    | 88234   | Small diameter | [^1]      |
+| powergrid   | USpowergrid_n4941 | 4942    | 13190   | Small diameter | [^1]      |
 
+## Graphs
+The following image represents the test graph.
+![Test graph](docs/test_graph.png)
 
-[^1]: [https://snap.stanford.edu/data/ego-Facebook.html](https://snap.stanford.edu/data/ego-Facebook.html).
+[^1]: [https://toreopsahl.com/datasets/#uspowergrid).
