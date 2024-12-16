@@ -1,7 +1,7 @@
 #include "benchmark.hpp"
 #include "bfs.hpp"
-#include <fstream>
 #include <iostream>
+#include <fstream>
 
 #define OUTPUT_FOLDER "output/"
 
@@ -46,7 +46,6 @@ void test_bfs_implementation(BaseGraph *(*initialize_graph)(eidType *,
   g->BFS(3, distances);
   write_col(col, M, output_filename+"_col.out");
   write_distances(distances, N, output_filename+"_distances.out");
-  delete[] distances;
 }
 
 int main(int argc, char **argv) {

@@ -1,4 +1,3 @@
-#include <omp.h>
 #include "utils.hpp"
 #include <parlay/sequence.h>
 
