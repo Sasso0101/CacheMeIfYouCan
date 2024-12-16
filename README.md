@@ -18,7 +18,7 @@ The make target selects the dataset to use. The available targets are listed in 
 | random      | random_1k_5k      | 1000    | 9940    | Small diameter | Speedcode |
 | powergrid   | USpowergrid_n4941 | 4942    | 13190   | Small diameter | [^1]      |
 
-[^1]: [https://toreopsahl.com/datasets/#uspowergrid).
+[^1]: https://toreopsahl.com/datasets/#uspowergrid
 
 ## Graphs
 | ![Test graph](docs/test_graph.png) | 
