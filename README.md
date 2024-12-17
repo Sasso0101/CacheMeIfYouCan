@@ -9,7 +9,7 @@ To run the project, you need to build it first. After building the project, run 
 cd build
 make <target> SOURCE=<source node>
 ```
-The make target selects the dataset to use. The available targets are listed in the Datasets section. The ID of the source node is passed using the `SOURCE` environment variable.
+The make target selects the dataset to use. The available targets are listed in the Datasets section. The `ID` of the source node is passed to the program using the `SOURCE` environment variable.
 
 The output is written to a file named `*_distances.out` in the directory where the program is executed from.
 
