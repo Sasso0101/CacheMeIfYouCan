@@ -22,17 +22,17 @@ target_link_libraries(BFS PUBLIC parlay)
 
 # Datasets
 add_custom_target(test
-    COMMAND BFS datasets/test.txt 11 26
+    COMMAND BFS datasets/test.txt 11 26 $(SOURCE)
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 add_custom_target(powergrid
-    COMMAND BFS datasets/USpowergrid_n4941.txt 4942 13190
+    COMMAND BFS datasets/USpowergrid_n4941.txt 4942 13190 $(SOURCE)
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 add_custom_target(random
-    COMMAND BFS datasets/random_1k_5k.txt 1000 9940
+    COMMAND BFS datasets/random_1k_5k.txt 1000 9940 $(SOURCE)
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )

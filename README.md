@@ -7,9 +7,11 @@ cmake -B build
 To run the project, you need to build it first. After building the project, run the following command in the project's root directory:
 ```bash
 cd build
-make <target>
+make <target> SOURCE=<source node>
 ```
-The make target selects the dataset to use. The available targets are listed in the Datasets section. The program computes the distance from the source node to all other nodes in the graph. The output is written to a file named `*_distances.out` in the root directory.
+The make target selects the dataset to use. The available targets are listed in the Datasets section. The ID of the source node is passed using the `SOURCE` environment variable.
+
+The output is written to a file named `*_distances.out` in the directory where the program is executed from.
 
 ## Datasets
 | Make target | Dataset           | `\|V\|` | `\|E\|` | Notes          | Source    |
