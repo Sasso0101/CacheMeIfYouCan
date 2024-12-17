@@ -42,26 +42,28 @@ public:
   void BFS(vidType source, weight_type *distances) {
     parlay::sequence<vidType> this_frontier;
     int distance = 0;
-    this_frontier.push_back(rowptr[source]);
+    // If the source node has only one neighbor, start the BFS from the neighbor
+    if (rowptr[source] == rowptr[source + 1] - 1) {
+      this_frontier.push_back(col[rowptr[source]] & ~(MARKED));
+      distance = 1;
+    } else {
+      this_frontier.push_back(rowptr[source]);
+    }
     while (!this_frontier.empty()) {
-      // print_frontier(this_frontier);
       parlay::sequence<vidType> next_frontier;
-      // print_frontier(this_frontier);
+      print_frontier(this_frontier);
       for (vidType v = 0; v < this_frontier.size(); ++v) {
         vidType neighbor_index = this_frontier[v];
-        if (this_frontier[v] == 13168) {
-          std::cout << "13168: " << std::endl;
-          print_frontier(this_frontier);
-        }
         // Repeat until all neighbors have been visited
         do {
           vidType neighbor = col[neighbor_index] & ~(MARKED);
-          // std::cout << "(v: " << this_frontier[v] << ") neighbor: " << neighbor;
+          std::cout << "(v: " << this_frontier[v] << ") neighbor: " << neighbor;
           if ((col[neighbor] >> MSB) == 0) {
             col[neighbor] = col[neighbor] | MARKED;
             next_frontier.push_back(neighbor);
+            std::cout << " added" << std::endl;
           } else {
-            // std::cout << " not added" << std::endl;
+            std::cout << " not added" << std::endl;
           }
           neighbor_index++;
         } while ((this_frontier[v] == neighbor_index - 1) ||

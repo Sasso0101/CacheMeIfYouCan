@@ -1,5 +1,6 @@
 #include "benchmark.hpp"
 #include "bfs.hpp"
+#include "utils.hpp"
 #include <iostream>
 #include <fstream>
 
@@ -36,22 +37,23 @@ void test_bfs_implementation(BaseGraph *(*initialize_graph)(eidType *,
                                                             vidType *, uint64_t,
                                                             uint64_t),
                              eidType *rowptr, vidType *col, uint64_t N,
-                             uint64_t M, const std::string &output_filename) {
+                             uint64_t M, const std::string &output_filename, vidType start_node) {
   BaseGraph *g = initialize_graph(rowptr, col, N, M);
 
   weight_type *distances = new weight_type[N]{};
   for (uint64_t i = 0; i < N; i++) {
     distances[i] = std::numeric_limits<weight_type>::max();
   }
-  g->BFS(3, distances);
+  std::cout << "Start node " << start_node << std::endl;
   write_col(col, M, output_filename+"_col.out");
+  g->BFS(start_node, distances);
   write_distances(distances, N, output_filename+"_distances.out");
 }
 
 int main(int argc, char **argv) {
-  if (argc != 4) {
+  if (argc != 5) {
     std::cerr << "Usage: " << argv[0]
-              << " <graph file> <num vertices> <num edges>" << std::endl;
+              << " <graph file> <num vertices> <num edges> <start node>" << std::endl;
     exit(1);
   }
   // Read graph from file
@@ -79,8 +81,8 @@ int main(int argc, char **argv) {
 
   std::cout << "Graph loaded!" << std::endl;
 
-  test_bfs_implementation(benchmark::initialize_graph, rowptr, col, N, M, "benchmark");
-  test_bfs_implementation(bfs::initialize_graph, rowptr, col, N, M, "bfs");
+  test_bfs_implementation(benchmark::initialize_graph, rowptr, col, N, M, "benchmark", std::stoi(argv[4]));
+  test_bfs_implementation(bfs::initialize_graph, rowptr, col, N, M, "bfs", std::stoi(argv[4]));
 
   // print_graph(rowptr, col, N, M);
 }
