@@ -1,4 +1,4 @@
-#include "utils.hpp"
+#include <graph.hpp>
 #include <parlay/sequence.h>
 
 namespace benchmark {

@@ -1,8 +1,10 @@
-#include "benchmark.hpp"
-#include "bfs.hpp"
-#include "utils.hpp"
+#include "graph.hpp"
+#include <benchmark.hpp>
+#include <bfs.hpp>
 #include <iostream>
 #include <fstream>
+#include <chrono>
+#include <limits>
 
 #define OUTPUT_FOLDER "output/"
 
@@ -33,21 +35,14 @@ void write_distances(weight_type *distances, uint64_t N, std::string filename) {
   }
 }
 
-void test_bfs_implementation(BaseGraph *(*initialize_graph)(eidType *,
-                                                            vidType *, uint64_t,
-                                                            uint64_t),
-                             eidType *rowptr, vidType *col, uint64_t N,
-                             uint64_t M, const std::string &output_filename, vidType start_node) {
-  BaseGraph *g = initialize_graph(rowptr, col, N, M);
-
-  weight_type *distances = new weight_type[N]{};
+void check_correctness(weight_type *distances_ref, weight_type *distances_bfs,
+                       uint64_t N) {
   for (uint64_t i = 0; i < N; i++) {
-    distances[i] = std::numeric_limits<weight_type>::max();
+    if (distances_ref[i] != distances_bfs[i]) {
+      std::cerr << "Mismatch at node " << i << " ref: " << distances_ref[i]
+                << " bfs: " << distances_bfs[i] << std::endl;
+    }
   }
-  std::cout << "Start node " << start_node << std::endl;
-  write_col(col, M, output_filename+"_col.out");
-  g->BFS(start_node, distances);
-  write_distances(distances, N, output_filename+"_distances.out");
 }
 
 int main(int argc, char **argv) {
@@ -72,6 +67,7 @@ int main(int argc, char **argv) {
   vidType *col = new vidType[M]{};
   eidType i;
   vidType j;
+  vidType start_node = std::stoi(argv[4]);
   vidType free = 0;
   while (file >> i >> j) {
     col[free] = j;
@@ -81,8 +77,27 @@ int main(int argc, char **argv) {
 
   std::cout << "Graph loaded!" << std::endl;
 
-  test_bfs_implementation(benchmark::initialize_graph, rowptr, col, N, M, "benchmark", std::stoi(argv[4]));
-  test_bfs_implementation(bfs::initialize_graph, rowptr, col, N, M, "bfs", std::stoi(argv[4]));
+  BaseGraph *g;
+  weight_type *distances_ref = new weight_type[N]{};
+  for (uint64_t i = 0; i < N; i++) {
+    distances_ref[i] = std::numeric_limits<weight_type>::max();
+  }
+  auto t1 = std::chrono::high_resolution_clock::now();
+  g = benchmark::initialize_graph(rowptr, col, N, M);
+  g->BFS(start_node, distances_ref);
+  auto t2 = std::chrono::high_resolution_clock::now();
 
+  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+  std::cout << "Reference: " << ms_double.count() << "ms\n";
+
+  weight_type *distances_bfs = new weight_type[N]{};
+  for (uint64_t i = 0; i < N; i++) {
+    distances_bfs[i] = std::numeric_limits<weight_type>::max();
+  }
+  g = bfs::initialize_graph(rowptr, col, N, M);
+  g->BFS(start_node, distances_bfs);
+
+  check_correctness(distances_ref, distances_bfs, N);
+  
   // print_graph(rowptr, col, N, M);
 }
