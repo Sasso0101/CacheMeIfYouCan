@@ -1,6 +1,7 @@
 #include "graph.hpp"
 #include <benchmark.hpp>
 #include <bfs.hpp>
+#include <cstdint>
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -37,11 +38,16 @@ void write_distances(weight_type *distances, uint64_t N, std::string filename) {
 
 void check_correctness(weight_type *distances_ref, weight_type *distances_bfs,
                        uint64_t N) {
+  bool correct = true;
   for (uint64_t i = 0; i < N; i++) {
     if (distances_ref[i] != distances_bfs[i]) {
       std::cerr << "Mismatch at node " << i << " ref: " << distances_ref[i]
                 << " bfs: " << distances_bfs[i] << std::endl;
+      correct = false;
     }
+  }
+  if (correct) {
+    std::cout << "Algorithm is correct!" << std::endl;
   }
 }
 
@@ -69,10 +75,14 @@ int main(int argc, char **argv) {
   vidType j;
   vidType start_node = std::stoi(argv[4]);
   vidType free = 0;
-  while (file >> i >> j) {
-    col[free] = j;
-    free += 1;
-    rowptr[i + 1] = free;
+  file >> i >> j;
+  for (uint64_t k = 0; k < N; k++) {
+    while (i == k && file) {
+      col[free] = j;
+      free += 1;
+      file >> i >> j;
+    }
+    rowptr[k + 1] = free;
   }
 
   std::cout << "Graph loaded!" << std::endl;

@@ -36,6 +36,10 @@ public:
     col[i] = distance | MARKED;
   }
 
+  inline bool is_unconnected(vidType i) {
+    return (rowptr[i] == rowptr[i + 1]);
+  }
+
   inline bool is_leaf(vidType i) {
     return (rowptr[i] == rowptr[i + 1] - 1);
   }
@@ -43,10 +47,13 @@ public:
   void compute_distances(weight_type *distances, vidType source) {
     for (uint64_t i = 0; i < N; i++) {
       // Check if node has only one neighbor
-      if (is_leaf(i)) {
+      if (is_unconnected(i)) {
+        distances[i] = std::numeric_limits<weight_type>::max();
+      } else if (is_leaf(i)) {
+        // For leaf nodes, the neighbor is the id of the vertex
         vidType neighbour = copy_unmarked(rowptr[i]);
-        if (is_marked(neighbour)) {
-          distances[i] = copy_unmarked(neighbour) + 1;
+        if (!is_leaf(neighbour) && is_marked(rowptr[neighbour])) { // Check if neighbor has been visited
+          distances[i] = copy_unmarked(rowptr[neighbour]) + 1;
         }
       } else if (is_marked(rowptr[i])) {
         distances[i] = copy_unmarked(rowptr[i]);
@@ -55,7 +62,7 @@ public:
     distances[source] = 0;
   }
 
-  void print_frontier(parlay::sequence<vidType> &frontier) {
+  void print_frontier(std::vector<vidType> &frontier) {
     std::cout << "Frontier: ";
     for (const auto &v : frontier) {
       std::cout << v << " ";
@@ -67,12 +74,22 @@ public:
     auto t1 = std::chrono::high_resolution_clock::now();
     std::vector<vidType> this_frontier;
     weight_type distance = 0;
-    // If the source node has only one neighbor, start the BFS from the neighbor
-    if (rowptr[source] == rowptr[source + 1] - 1) {
-      this_frontier.push_back(copy_unmarked(rowptr[source]));
-      distance = 1;
+    vidType start = rowptr[source];
+    if (is_unconnected(source)) {
+      distances[source] = 0;
+      return;
+    } else if (is_leaf(source)) {
+      vidType neighbor = copy_unmarked(start);
+      if (is_leaf(neighbor)) { // Neighbor has source as only neighbor
+        distances[source] = 0;
+        distances[neighbor] = 1;
+        return;
+      } else {
+        this_frontier.push_back(rowptr[neighbor]);
+        distance = 1;
+      }
     } else {
-      this_frontier.push_back(rowptr[source]);
+      this_frontier.push_back(start);
     }
     while (!this_frontier.empty()) {
       std::vector<vidType> next_frontier;
@@ -107,9 +124,11 @@ public:
 
 void merged_csr(eidType *rowptr, vidType *col, uint64_t N, uint64_t M) {
   for (vidType i = 0; i < N; i++) {
-    // Replace list of neighbors with list of neighbor indices in col
-    for (uint64_t j = rowptr[i]; j < rowptr[i + 1]; j++) {
-      col[j] = vidType(rowptr[col[j]]);
+    if (rowptr[i + 1] - rowptr[i] > 1) { // Check if node has more than one neighbor
+      // Replace list of neighbors with list of neighbor indices in col
+      for (uint64_t j = rowptr[i]; j < rowptr[i + 1]; j++) {
+        col[j] = vidType(rowptr[col[j]]);
+      }
     }
     // Mark last neighbor of node
     col[rowptr[i + 1] - 1] = col[rowptr[i + 1] - 1] | MARKED;

@@ -6,8 +6,7 @@ project(BFS)
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS "-Wall -O3 -march=native")
 
 include_directories(include)
 
@@ -66,12 +65,17 @@ add_custom_target(random
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 add_custom_target(twitch
-    COMMAND BFS datasets/twitch.txt 168113 13595114 $(SOURCE)
+    COMMAND BFS datasets/twitch.txt 168114 13595114 $(SOURCE)
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 add_custom_target(epinions
-    COMMAND BFS datasets/epinions.txt 75887 811480 $(SOURCE)
+    COMMAND BFS datasets/epinions.txt 75888 811480 $(SOURCE)
+    DEPENDS BFS
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+add_custom_target(missing
+    COMMAND BFS datasets/missing.txt 4 2 $(SOURCE)
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
