@@ -6,16 +6,13 @@ project(BFS)
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -O3 -march=native")
+set(CMAKE_CXX_FLAGS "-Wall -O3 -march=native -fopenmp")
+set(CMAKE_CXX_FLAGS_DEBUG "-fopt-info-omp-vec-optimized-missed=optinfo.txt")
 
 include_directories(include)
 
 # Add sources
 add_executable(BFS src/bfs.cpp src/benchmark.cpp src/main.cpp)
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
-    target_compile_options(BFS PRIVATE -fopt-info-omp-vec-optimized-missed=optinfo.txt -fopenmp)
-endif()
 
 include(FetchContent)
 
@@ -40,6 +37,9 @@ set(DATASETS
     random_1k_5k.txt
     twitch.txt
     epinions.txt
+    0degree.txt
+    pokec.txt
+    roadnet-ca.txt
 )
 
 foreach(dataset ${DATASETS})
@@ -74,8 +74,18 @@ add_custom_target(epinions
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
-add_custom_target(missing
-    COMMAND BFS datasets/missing.txt 4 2 $(SOURCE)
+add_custom_target(0degree
+    COMMAND BFS datasets/0degree.txt 4 2 $(SOURCE)
+    DEPENDS BFS
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+add_custom_target(pokec
+    COMMAND BFS datasets/pokec.txt 1632804 44603928 $(SOURCE)
+    DEPENDS BFS
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+add_custom_target(roadnet-ca
+    COMMAND BFS datasets/roadnet-ca.txt 1971281 5533214 $(SOURCE)
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )

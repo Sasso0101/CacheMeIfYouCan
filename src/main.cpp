@@ -1,10 +1,10 @@
 #include "graph.hpp"
 #include <benchmark.hpp>
 #include <bfs.hpp>
-#include <cstdint>
-#include <iostream>
-#include <fstream>
 #include <chrono>
+#include <cstdint>
+#include <fstream>
+#include <iostream>
 #include <limits>
 
 #define OUTPUT_FOLDER "output/"
@@ -36,7 +36,7 @@ void write_distances(weight_type *distances, uint64_t N, std::string filename) {
   }
 }
 
-void check_correctness(weight_type *distances_ref, weight_type *distances_bfs,
+bool check_correctness(weight_type *distances_ref, weight_type *distances_bfs,
                        uint64_t N) {
   bool correct = true;
   for (uint64_t i = 0; i < N; i++) {
@@ -46,15 +46,14 @@ void check_correctness(weight_type *distances_ref, weight_type *distances_bfs,
       correct = false;
     }
   }
-  if (correct) {
-    std::cout << "Algorithm is correct!" << std::endl;
-  }
+  return correct;
 }
 
 int main(int argc, char **argv) {
   if (argc != 5) {
     std::cerr << "Usage: " << argv[0]
-              << " <graph file> <num vertices> <num edges> <start node>" << std::endl;
+              << " <graph file> <num vertices> <num edges> <start node>"
+              << std::endl;
     exit(1);
   }
   // Read graph from file
@@ -107,7 +106,13 @@ int main(int argc, char **argv) {
   g = bfs::initialize_graph(rowptr, col, N, M);
   g->BFS(start_node, distances_bfs);
 
-  check_correctness(distances_ref, distances_bfs, N);
-  
+  if (check_correctness(distances_ref, distances_bfs, N)) {
+    return 0;
+  } else {
+    return 1;
+  }
+  // write_distances(distances_ref, N, "ref_distances.txt");
+  // write_distances(distances_bfs, N, "bfs_distances.txt");
+
   // print_graph(rowptr, col, N, M);
 }

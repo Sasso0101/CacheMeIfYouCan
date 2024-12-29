@@ -24,7 +24,7 @@ def write_graph(graph, file_path):
   with open(file_path, 'w') as file:
     for v in sorted(graph):
       for adj in sorted(graph[v]):
-        file.write(f"{v},{adj}\n")
+        file.write(f"{v} {adj}\n")
 
 def main(input_file, output_file):
   """

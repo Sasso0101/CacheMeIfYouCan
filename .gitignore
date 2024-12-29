@@ -4,3 +4,4 @@ build/
 .cache/
 output/
 datasets/
+**/*_distances.txt
