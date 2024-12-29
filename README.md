@@ -24,7 +24,7 @@ The datasets are automatically downloaded in the `datasets` directory when the p
 | Make target | Filename          | `\|V\|` | `\|E\|`  | Notes            | Source    |
 |-------------|-------------------|---------|----------|------------------|-----------|
 | test        | test.txt          | 16      | 32       |                  | Handcrafted |
-| 0degree     | 0degree.txt       | 4       | 2        | Contains unconnected vertices and 0-degree vertices | Handcrafted |
+| unconnected | unconnected.txt   | 4       | 2        | Contains unconnected vertices | Handcrafted |
 | random      | random_1k_5k.txt  | 1000    | 9940     |                  | Speedcode |
 | powergrid   | powergrid.txt     | 4942    | 13190    | Power grid       | [^1]      |
 | epinions    | epinions.txt      | 75879   | 508837   | Social network   | [^2]      |

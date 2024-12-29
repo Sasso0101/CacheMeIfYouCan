@@ -37,7 +37,7 @@ set(DATASETS
     random_1k_5k.txt
     twitch.txt
     epinions.txt
-    0degree.txt
+    unconnected.txt
     pokec.txt
     roadnet-ca.txt
 )
@@ -74,8 +74,8 @@ add_custom_target(epinions
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
-add_custom_target(0degree
-    COMMAND BFS datasets/0degree.txt 4 2 $(SOURCE)
+add_custom_target(unconnected
+    COMMAND BFS datasets/unconnected.txt 4 2 $(SOURCE)
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
