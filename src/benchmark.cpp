@@ -1,5 +1,6 @@
 #include <graph.hpp>
-#include <parlay/sequence.h>
+#include <vector>
+#include <profiling.hpp>
 
 namespace benchmark {
 
@@ -20,6 +21,7 @@ public:
   }
 
   void BFS(vidType source, weight_type *distances) {
+    LIKWID_MARKER_START("Reference");
     std::vector<vidType> this_frontier;
     distances[source] = 0;
     this_frontier.push_back(source);
@@ -36,6 +38,7 @@ public:
       }
       std::swap(this_frontier, next_frontier);
     }
+    LIKWID_MARKER_STOP("Reference");
   }
 };
 

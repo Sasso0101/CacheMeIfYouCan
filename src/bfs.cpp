@@ -2,7 +2,8 @@
 #include <graph.hpp>
 #include <iostream>
 #include <omp.h>
-#include <parlay/sequence.h>
+#include <vector>
+#include <profiling.hpp>
 
 namespace bfs {
 
@@ -62,6 +63,7 @@ public:
 
   void BFS(vidType source, weight_type *distances) {
     auto t1 = std::chrono::high_resolution_clock::now();
+    LIKWID_MARKER_START("BFS");
     std::vector<vidType> this_frontier;
     weight_type distance = 0;
     vidType start = rowptr[source];
@@ -106,6 +108,8 @@ public:
       distance++;
       std::swap(this_frontier, next_frontier);
     }
+    LIKWID_MARKER_STOP("BFS");
+    LIKWID_MARKER_CLOSE;
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> ms_double = t2 - t1;
     std::cout << "BFS: " << ms_double.count() << "ms\n";

@@ -1,5 +1,6 @@
 #include "graph.hpp"
 #include <benchmark.hpp>
+#include <profiling.hpp>
 #include <bfs.hpp>
 #include <chrono>
 #include <cstdint>
@@ -91,6 +92,8 @@ int main(int argc, char **argv) {
   for (uint64_t i = 0; i < N; i++) {
     distances_ref[i] = std::numeric_limits<weight_type>::max();
   }
+  LIKWID_MARKER_INIT;
+  LIKWID_MARKER_THREADINIT;
   auto t1 = std::chrono::high_resolution_clock::now();
   g = benchmark::initialize_graph(rowptr, col, N, M);
   g->BFS(start_node, distances_ref);

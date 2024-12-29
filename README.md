@@ -1,5 +1,5 @@
 ## How to build
-To build the project, you need cmake (>=3.10) and a C++17 compiler. Clone the repository and run the following commands in the project's root directory:
+To build the project, you need cmake (>=3.10) and clang++. Clone the repository and run the following commands in the project's root directory:
 ```bash
 cd build
 cmake .. -DPARLAY_OPENMP=On
@@ -32,7 +32,7 @@ The datasets are automatically downloaded in the `datasets` directory when the p
 | pokec       | pokec.txt         | 1632804 | 44603928 | Social network   | [^4]      |
 | roadnet-ca  | roadnet-ca.txt    | 1971281 | 5533214  | Road network (California) | [^5] |
 
-The datasets taken from the SNAP dataset collection were converted to undirected graphs by adding the reverse of each edge and the edges were sorted by source vertex and destination vertex. The Python script used to convert the datasets is available in the `utils` directory.
+The datasets taken from the SNAP dataset collection were converted to undirected graphs by adding the reverse of each edge. Then, the edges were sorted by source vertex and destination vertex. The Python script used to convert the datasets is available in the `utils` directory.
 
 [^1]: https://toreopsahl.com/datasets/#uspowergrid
 [^2]: http://snap.stanford.edu/data/soc-Epinions1.html
@@ -41,6 +41,24 @@ The datasets taken from the SNAP dataset collection were converted to undirected
 [^5]: http://snap.stanford.edu/data/roadNet-CA.html
 
 ## Graphs
-| ![Test graph](docs/test_graph.png) | ![Graph with unconnected vertices](docs/unconnected_graph.png)
-|:--:| :--:|
-| *Test graph* | *Graph with unconnected vertices* |
+<table width="100%">
+  <tbody>
+    <tr>
+      <td width="50%"><img src="docs/test_graph.png"/></td>
+      <td width="50%"><img src="docs/unconnected_graph.png"/></td>
+    </tr>
+    <tr style="text-align:center">
+      <td width="50%"><i>Test graph</i></td>
+      <td width="50%"><i>Graph with unconnected vertices</i></td>
+    </tr>
+  </tbody>
+</table>
+
+## Profiling
+The project is already set up to use the [LIKWID](https://github.com/RRZE-HPC/likwid) suite for profiling. The LIKWID suite must be installed on the system. To install the LIKWID suite, follow the instructions in the [README file](https://github.com/RRZE-HPC/likwid?tab=readme-ov-file#download-build-and-install) in the LIKWID repository. To list the available profiling groups, run `likwid-perfctr -a`. To view the detailed description of a group, run `likwid-perfctr -g <group> -h`.
+
+For example, to view the `CYCLE_ACTIVITY` statistics (measures cycles spent waiting for data from the cache and memory hierarchy), run the following command:
+```bash
+cd build
+likwid-perfctr -C 0 -g CYCLE_ACTIVITY -m ./BFS ../datasets/pokec.txt 1632804 44603928 10
+```

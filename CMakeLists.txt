@@ -6,29 +6,41 @@ project(BFS)
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -O3 -march=native -fopenmp")
-set(CMAKE_CXX_FLAGS_DEBUG "-fopt-info-omp-vec-optimized-missed=optinfo.txt")
+set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_CXX_FLAGS "-Wall -O3 -march=native")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -gcolumn-info -gline-tables-only -fsave-optimization-record=yaml -foptimization-record-file=opt.yaml")
 
 include_directories(include)
 
 # Add sources
 add_executable(BFS src/bfs.cpp src/benchmark.cpp src/main.cpp)
 
-include(FetchContent)
-
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(BFS PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
+find_package(likwid)
+if(LIKWID_FOUND)
+    message(STATUS "Found LIKWID: ${LIKWID_LIBRARIES}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -DLIKWID_PERFMON")
+    target_link_libraries(BFS PRIVATE likwid::likwid)
+    target_link_options(BFS PRIVATE -lm)
+endif()
+
 # Add ParlayLib
-FetchContent_Declare(
-  parlaylib
-  GIT_REPOSITORY https://github.com/cmuparlay/parlaylib.git
-  GIT_TAG        master
-)
-FetchContent_MakeAvailable(parlaylib)
-target_link_libraries(BFS PRIVATE parlay)
+include(FetchContent)
+# FetchContent_Declare(
+#   parlaylib
+#   GIT_REPOSITORY https://github.com/cmuparlay/parlaylib.git
+#   GIT_TAG        master
+# )
+# FetchContent_GetProperties(parlaylib)
+# if(NOT parlaylib_POPULATED)
+#   FetchContent_Populate(parlaylib)  
+#   add_subdirectory(${parlaylib_SOURCE_DIR} EXCLUDE_FROM_ALL)
+# endif()
+# target_link_libraries(BFS PRIVATE parlay)
 
 # Make a list of datasets and download them if they don't exist
 set(DATASETS
