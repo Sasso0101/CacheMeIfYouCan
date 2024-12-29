@@ -41,6 +41,6 @@ The datasets taken from the SNAP dataset collection were converted to undirected
 [^5]: http://snap.stanford.edu/data/roadNet-CA.html
 
 ## Graphs
-| ![Test graph](docs/test_graph.png) | ![0-degree graph](docs/0degree_graph.png)
+| ![Test graph](docs/test_graph.png) | ![Graph with unconnected vertices](docs/unconnected_graph.png)
 |:--:| :--:|
-| *Test graph* | *0-degree graph* |
+| *Test graph* | *Graph with unconnected vertices* |
