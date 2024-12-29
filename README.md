@@ -47,7 +47,7 @@ The datasets taken from the SNAP dataset collection were converted to undirected
       <td width="50%"><img src="docs/test_graph.png"/></td>
       <td width="50%"><img src="docs/unconnected_graph.png"/></td>
     </tr>
-    <tr style="text-align:center">
+    <tr align="center">
       <td width="50%"><i>Test graph</i></td>
       <td width="50%"><i>Graph with unconnected vertices</i></td>
     </tr>
