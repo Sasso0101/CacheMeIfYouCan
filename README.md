@@ -2,11 +2,9 @@
 To build the project, you need cmake (>=3.10) and a C++17 compiler. Clone the repository and run the following commands in the project's root directory:
 ```bash
 cd build
-cmake .. -DPARLAY_OPENMP=On -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+cmake .. -DPARLAY_OPENMP=On
 ```
-The `-DPARLAY_OPENMP=On` flag enables OpenMP support in the Parlay library. The `-DCMAKE_EXPORT_COMPILE_COMMANDS=1` flag generates a `compile_commands.json` file that is used by the clangd language server for code completion and navigation.
-
-The vectorization report is written to a file named `optinfo.txt` in the build directory.
+The `-DPARLAY_OPENMP=On` flag enables OpenMP support in the Parlay library.
 
 ## How to run
 To run the project, run the following commands in the project's root directory:
@@ -14,9 +12,12 @@ To run the project, run the following commands in the project's root directory:
 cd build
 make <target> SOURCE=<source node>
 ```
+
 The make target selects the dataset to use. The available targets are listed in the Datasets section. The `ID` of the source node is passed to the program using the `SOURCE` environment variable.
 
-The output is written to a file named `*_distances.out` in the directory where the `make` command is executed from.
+Each time the code is compiled, a vectorization report is written to a file named `optinfo.txt` in the build directory.
+
+The program will output the computed distances to a file named `*_distances.out` in the directory where the `make` command is executed from.
 
 ## Datasets
 The datasets are automatically downloaded in the `datasets` directory when the project is built. Note that the pokec dataset is 600MB in size and may take a while to download.
