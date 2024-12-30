@@ -1,6 +1,7 @@
 #include <chrono>
 #include <graph.hpp>
 #include <iostream>
+#include <algorithm>
 #include <omp.h>
 #include <vector>
 #include <profiling.hpp>
@@ -59,6 +60,27 @@ public:
       std::cout << v << " ";
     }
     std::cout << std::endl;
+  }
+
+  void bottom_up_step(std::vector<vidType> this_frontier, std::vector<vidType> *next_frontier, weight_type distance) {
+    for (vidType i = 0; i < N; i++) {
+      if (is_marked(rowptr[i])) {
+        continue;
+      }
+      vidType start = rowptr[i];
+      vidType end = rowptr[i + 1];
+      for (vidType j = start; j < end; j++) {
+        vidType neighbor = copy_unmarked(j);
+        if (!is_marked(neighbor)) {
+          continue;
+        }
+        if (std::find(this_frontier.begin(), this_frontier.end(), copy_unmarked(j)) !=
+            this_frontier.end()) {
+          set_distance(j, distance);
+          break;
+        }
+      }
+    }
   }
 
   void BFS(vidType source, weight_type *distances) {
