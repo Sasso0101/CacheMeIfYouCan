@@ -2,6 +2,7 @@
 #include <benchmark.hpp>
 #include <profiling.hpp>
 #include <bfs.hpp>
+#include <bfs_cached.hpp>
 #include <chrono>
 #include <cstdint>
 #include <fstream>
@@ -75,6 +76,7 @@ int main(int argc, char **argv) {
   vidType j;
   vidType start_node = std::stoi(argv[4]);
   vidType free = 0;
+  rowptr[0] = 0;
   file >> i >> j;
   for (uint64_t k = 0; k < N; k++) {
     while (i == k && file) {

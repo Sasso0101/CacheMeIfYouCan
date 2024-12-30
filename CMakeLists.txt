@@ -13,7 +13,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -gcolumn-info -gline-tables-only -fsave-optimizati
 include_directories(include)
 
 # Add sources
-add_executable(BFS src/bfs.cpp src/benchmark.cpp src/main.cpp)
+add_executable(BFS src/bfs.cpp src/benchmark.cpp src/bfs_cached.cpp src/main.cpp)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
@@ -27,6 +27,9 @@ if(LIKWID_FOUND)
     target_link_libraries(BFS PRIVATE likwid::likwid)
     target_link_options(BFS PRIVATE -lm)
 endif()
+
+# find_package(absl REQUIRED)
+# target_link_libraries(BFS PRIVATE absl::flat_hash_map)
 
 # Add ParlayLib
 include(FetchContent)
