@@ -10,63 +10,60 @@
 
 namespace bfs {
 
-#define MARKED 1 << 31
-#define MSB 31
+#define VISITED_BIT 30
+#define MARKED_BIT 31
+#define MARKED 1 << MARKED_BIT
+#define VISITED 0b11 << VISITED_BIT
+#define VISITED_MASK 0b01 << VISITED_BIT
 #define ALPHA 14
 #define BETA 24
 
 typedef std::unordered_map<vidType, vidType> degrees_map;
 enum class Direction { TOP_DOWN, BOTTOM_UP };
+typedef std::vector<vidType> frontier;
 
 class Graph : public BaseGraph {
   eidType *rowptr;
-  vidType *col;
-  degrees_map *degrees;
+  [[maybe_unused]] vidType *col;
+  vidType *merged;
   uint32_t unexplored_edges;
   Direction dir;
   [[maybe_unused]] uint64_t N;
   [[maybe_unused]] uint64_t M;
+  uint32_t edges_frontier;
 
 public:
-  Graph(eidType *rowptr, vidType *col, degrees_map *degrees, uint64_t N, uint64_t M)
-      : rowptr(rowptr), col(col), degrees(degrees), N(N), M(M) {
-    unexplored_edges = N;
+  Graph(eidType *rowptr, vidType *col, vidType *merged, uint64_t N, uint64_t M)
+      : rowptr(rowptr), col(col), merged(merged), N(N), M(M) {
+    unexplored_edges = M;
   }
   ~Graph() {}
 
-  inline vidType copy_unmarked(vidType i) { return col[i] & ~(MARKED); }
+  inline vidType copy_unmarked(vidType i) { return merged[i] & ~(VISITED); }
 
-  inline bool is_marked(vidType i) { return (col[i] >> MSB) != 0; }
+  inline bool is_marked(vidType i) { return ((merged[i]) >> MARKED_BIT) != 0; }
+  inline bool is_visited(vidType i) { return ((merged[i] & VISITED_MASK) >> VISITED_BIT) != 0; }
 
-  inline void mark(vidType i) { col[i] = col[i] | MARKED; }
-
+  inline void set_visited(vidType i) { merged[i] |= VISITED; }
+  
   inline void set_distance(vidType i, weight_type distance) {
-    col[i] = distance | MARKED;
+    merged[i] = distance | VISITED;
   }
 
-  inline bool is_unconnected(vidType i) { return (rowptr[i] == rowptr[i + 1]); }
+  inline bool is_unconnected(vidType i) { return (merged[i] & ~(VISITED)) == 0; }
 
   inline bool is_leaf(vidType i) { return (rowptr[i] == rowptr[i + 1] - 1); }
 
   void compute_distances(weight_type *distances, vidType source) {
     for (uint64_t i = 0; i < N; i++) {
-      // Check if node has only one neighbor
-      if (is_unconnected(i)) {
-        distances[i] = std::numeric_limits<weight_type>::max();
-      } else if (is_leaf(i)) {
-        // For leaf nodes, the neighbor is the ID of the vertex
-        vidType neighbour = copy_unmarked(rowptr[i]);
-        if (!is_leaf(neighbour) && is_marked(rowptr[neighbour])) {
-          distances[i] = copy_unmarked(rowptr[neighbour]) + 1;
-        }
-      } else if (is_marked(rowptr[i])) {
+      if (is_visited(rowptr[i])) {
         distances[i] = copy_unmarked(rowptr[i]);
       }
     }
     distances[source] = 0;
   }
 
-  void print_frontier(std::vector<vidType> &frontier) {
+  void print_frontier(frontier &frontier) {
     std::cout << "Frontier: ";
     for (const auto &v : frontier) {
       std::cout << v << " ";
@@ -74,108 +71,71 @@ public:
     std::cout << std::endl;
   }
 
-  uint32_t count_edges_frontier(std::vector<vidType> *frontier) {
-    uint32_t edges_frontier = 0;
-    for (const auto &v : *frontier) {
-      edges_frontier += degrees->at(v);
-    }
-    return edges_frontier;
+  inline void add_to_frontier(frontier *frontier, vidType v) {
+    frontier->push_back(v);
+    edges_frontier += copy_unmarked(v);
   }
 
-  bool switch_to_bottom_up(std::vector<vidType> *frontier) {
-    uint32_t edges_frontier = count_edges_frontier(frontier);
+  bool switch_to_bottom_up(frontier *frontier) {
     bool to_switch = edges_frontier > unexplored_edges / ALPHA;
     unexplored_edges -= edges_frontier;
-    std::cout << "Edges in frontier: " << edges_frontier << ", unexplored edges: " << unexplored_edges << ", switch: " << to_switch << std::endl;
+    // std::cout << "Edges in frontier: " << edges_frontier << ", unexplored edges: " << unexplored_edges << ", switch: " << to_switch << std::endl;
+    edges_frontier = 0;
     return to_switch;
   }
 
-  bool switch_to_top_down(std::vector<vidType> *frontier) {
-    uint32_t edges_frontier = count_edges_frontier(frontier);
+  bool switch_to_top_down(frontier *frontier) {
     bool to_switch = frontier->size() < N / BETA;
     unexplored_edges -= edges_frontier;
-    std::cout << "Frontier size: " << frontier->size() << ", total elements: " << N << ", switch: " << to_switch << std::endl;
+    // std::cout << "Frontier size: " << frontier->size() << ", total elements: " << N << ", switch: " << to_switch << std::endl;
+    edges_frontier = 0;
     return to_switch;
   }
 
-  void bottom_up_step(std::vector<vidType> this_frontier, std::vector<vidType> *next_frontier, weight_type distance) {
-    std::cout << "Bottom up step\n";
+  void bottom_up_step(frontier this_frontier, frontier *next_frontier, weight_type distance) {
+    // std::cout << "Bottom up step\n";
     for (vidType i = 0; i < N; i++) {
-      if (is_marked(rowptr[i]) || is_leaf(i) || is_unconnected(i)) {
+      vidType start = rowptr[i];
+      if (is_visited(start) || is_unconnected(start)) {
         continue;
       }
-      vidType start = rowptr[i];
-      vidType end = rowptr[i + 1];
-      for (vidType j = start; j < end; j++) {
-        vidType neighbor = copy_unmarked(j);
-        if (is_marked(neighbor)) {
-          next_frontier->push_back(rowptr[i]);
+      for (vidType j = start + 1; j < rowptr[i+1]; j++) {
+        if (is_visited(merged[j]) && copy_unmarked(merged[j]) == distance - 1) {
+          // If neighbor is in frontier, add this vertex to next frontier
+          add_to_frontier(next_frontier, start);
+          set_distance(start, distance);
           break;
         }
       }
     }
-    for (const auto &v : this_frontier) {
-      set_distance(v, distance);
-    }
-    for (const auto &v : *next_frontier) {
-      mark(v);
-    }
   }
 
-  void top_down_step(std::vector<vidType> this_frontier, std::vector<vidType> *next_frontier, weight_type distance) {
-    std::cout << "Top down step\n";
+  void top_down_step(frontier this_frontier, frontier *next_frontier, weight_type distance) {
+    // std::cout << "Top down step\n";
     for (const auto &v : this_frontier) {
-      vidType curr_index = v;
-      vidType neighbor_start = copy_unmarked(curr_index);
-      // Repeat until all neighbors have been visited except last one
-      do {
-        if (!is_marked(neighbor_start)) {
-          mark(neighbor_start);
-          next_frontier->push_back(neighbor_start);
-          std::cout << "Adding " << neighbor_start << " to next frontier\n";
+      for (vidType i = v + 1; (i < N + M) && !is_marked(i); i++) {
+        vidType neighbor = merged[i];
+        if (!is_visited(neighbor)) {
+          add_to_frontier(next_frontier, neighbor);
+          set_distance(neighbor, distance);
         }
-        curr_index++;
-        neighbor_start = copy_unmarked(curr_index);
-      } while (!is_marked(curr_index));
-      // Visit last neighbor
-      if (!is_marked(neighbor_start)) {
-        mark(neighbor_start);
-        next_frontier->push_back(neighbor_start);
-        std::cout << "Adding " << neighbor_start << " to next frontier\n";
       }
-      set_distance(v, distance);
     }
   }
 
   void BFS(vidType source, weight_type *distances) {
     auto t1 = std::chrono::high_resolution_clock::now();
     LIKWID_MARKER_START("BFS");
-    std::vector<vidType> this_frontier;
-    weight_type distance = 0;
+    frontier this_frontier;
     vidType start = rowptr[source];
     dir = Direction::TOP_DOWN;
-    if (is_unconnected(source)) {
-      distances[source] = 0;
-      return;
-    } else if (is_leaf(source)) {
-      vidType neighbor = copy_unmarked(start);
-      if (is_leaf(neighbor)) {
-        // Source and only neighbor are both leaf nodes, end BFS
-        distances[source] = 0;
-        distances[neighbor] = 1;
-        return;
-      } else {
-        this_frontier.push_back(rowptr[neighbor]);
-        mark(rowptr[neighbor]);
-        distance = 1;
-      }
-    } else {
-      this_frontier.push_back(start);
-      mark(start);
-    }
+    add_to_frontier(&this_frontier, start);
+    set_distance(start, 0);
+    weight_type distance = 1;
     while (!this_frontier.empty()) {
-      std::vector<vidType> next_frontier;
-      /*if (dir == Direction::TOP_DOWN) {
+      // print_frontier(this_frontier);
+      frontier next_frontier;
+      if (dir == Direction::TOP_DOWN) {
         if (switch_to_bottom_up(&this_frontier)) {
           dir = Direction::BOTTOM_UP;
           bottom_up_step(this_frontier, &next_frontier, distance);
@@ -191,8 +151,7 @@ public:
             bottom_up_step(this_frontier, &next_frontier, distance);
           }
         }
-      }*/
-      top_down_step(this_frontier, &next_frontier, distance);
+      }
       distance++;
       std::swap(this_frontier, next_frontier);
     }
@@ -210,35 +169,36 @@ public:
   }
 };
 
-void merged_csr(eidType *rowptr, vidType *col, degrees_map *degrees, uint64_t N, uint64_t M) {
-  
-  for (vidType i = 0; i < N; i++) {
-    // Check if node has more than one neighbor, otherwise don't replace
-    // neighbor IDs with indices in col because it makes the computation
-    // of distances more complicated
-    if (rowptr[i + 1] - rowptr[i] > 1) {
-      // Replace list of neighbors with list of neighbor indices in col
-      for (uint64_t j = rowptr[i]; j < rowptr[i + 1]; j++) {
-        col[j] = vidType(rowptr[col[j]]);
-      }
-      // Mark last neighbor of node
-      col[rowptr[i + 1] - 1] = col[rowptr[i + 1] - 1] | MARKED;
-    }
+inline vidType get_degree(eidType *rowptr, vidType i) {
+  return rowptr[i + 1] - rowptr[i];
+}
 
-    degrees->insert({rowptr[i], rowptr[i + 1] - rowptr[i]});
+void merged_csr(eidType *rowptr, vidType *col, vidType *merged, uint64_t N, uint64_t M) {
+  vidType merged_index = 0;
+  // Add degree of each vertex to the start of its neighbor list
+  for (vidType i = 0; i < N; i++) {
+    vidType start = rowptr[i];
+    merged[merged_index++] = get_degree(rowptr, i) | MARKED;
+    for (vidType j = start; j < rowptr[i + 1]; j++, merged_index++) {
+      merged[merged_index] = rowptr[col[j]] + col[j];
+    }
+  }
+  // Fix rowptr indices by adding offset caused by adding the degree to the start of
+  // each neighbor list
+  for (vidType i = 0; i <= N; i++) {
+    rowptr[i] = rowptr[i] + i;
   }
 }
 
 BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
                             uint64_t M) {
   auto t1 = std::chrono::high_resolution_clock::now();
-  degrees_map *degrees = new degrees_map();
-  degrees->reserve(N);
-  merged_csr(rowptr, col, degrees, N, M);
+  vidType *merged = new vidType[M+N];
+  merged_csr(rowptr, col, merged, N, M);
   auto t2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
   std::cout << "Preprocessing: " << ms_double.count() << "ms\n";
-  return new Graph(rowptr, col, degrees, N, M);
+  return new Graph(rowptr, col, merged, N, M);
 }
 
 } // namespace bfs
