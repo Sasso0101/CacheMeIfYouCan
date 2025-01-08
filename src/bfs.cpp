@@ -101,26 +101,24 @@ public:
   void bottom_up_step(std::vector<vidType> this_frontier, std::vector<vidType> *next_frontier, weight_type distance) {
     std::cout << "Bottom up step\n";
     for (vidType i = 0; i < N; i++) {
-      if (is_marked(rowptr[i])) {
+      if (is_marked(rowptr[i]) || is_leaf(i) || is_unconnected(i)) {
         continue;
       }
       vidType start = rowptr[i];
       vidType end = rowptr[i + 1];
       for (vidType j = start; j < end; j++) {
         vidType neighbor = copy_unmarked(j);
-        if (!is_marked(neighbor)) {
-          continue;
-        }
-        if (std::find(this_frontier.begin(), this_frontier.end(), neighbor) !=
-            this_frontier.end()) {
+        if (is_marked(neighbor)) {
           next_frontier->push_back(rowptr[i]);
-          mark(rowptr[i]);
           break;
         }
       }
     }
     for (const auto &v : this_frontier) {
       set_distance(v, distance);
+    }
+    for (const auto &v : *next_frontier) {
+      mark(v);
     }
   }
 
@@ -134,6 +132,7 @@ public:
         if (!is_marked(neighbor_start)) {
           mark(neighbor_start);
           next_frontier->push_back(neighbor_start);
+          std::cout << "Adding " << neighbor_start << " to next frontier\n";
         }
         curr_index++;
         neighbor_start = copy_unmarked(curr_index);
@@ -142,6 +141,7 @@ public:
       if (!is_marked(neighbor_start)) {
         mark(neighbor_start);
         next_frontier->push_back(neighbor_start);
+        std::cout << "Adding " << neighbor_start << " to next frontier\n";
       }
       set_distance(v, distance);
     }
@@ -175,7 +175,7 @@ public:
     }
     while (!this_frontier.empty()) {
       std::vector<vidType> next_frontier;
-      if (dir == Direction::TOP_DOWN) {
+      /*if (dir == Direction::TOP_DOWN) {
         if (switch_to_bottom_up(&this_frontier)) {
           dir = Direction::BOTTOM_UP;
           bottom_up_step(this_frontier, &next_frontier, distance);
@@ -191,8 +191,8 @@ public:
             bottom_up_step(this_frontier, &next_frontier, distance);
           }
         }
-      }
-      // top_down_step(this_frontier, &next_frontier, distance);
+      }*/
+      top_down_step(this_frontier, &next_frontier, distance);
       distance++;
       std::swap(this_frontier, next_frontier);
     }
@@ -221,9 +221,9 @@ void merged_csr(eidType *rowptr, vidType *col, degrees_map *degrees, uint64_t N,
       for (uint64_t j = rowptr[i]; j < rowptr[i + 1]; j++) {
         col[j] = vidType(rowptr[col[j]]);
       }
+      // Mark last neighbor of node
+      col[rowptr[i + 1] - 1] = col[rowptr[i + 1] - 1] | MARKED;
     }
-    // Mark last neighbor of node
-    col[rowptr[i + 1] - 1] = col[rowptr[i + 1] - 1] | MARKED;
 
     degrees->insert({rowptr[i], rowptr[i + 1] - rowptr[i]});
   }
