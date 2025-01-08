@@ -1,7 +1,7 @@
 #include <chrono>
 #include <graph.hpp>
 #include <iostream>
-#include <omp.h>
+// #include <omp.h>
 #include <vector>
 #include <profiling.hpp>
 

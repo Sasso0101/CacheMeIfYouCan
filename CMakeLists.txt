@@ -6,9 +6,8 @@ project(BFS)
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_FLAGS "-Wall -O3 -march=native")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -gcolumn-info -gline-tables-only -fsave-optimization-record=yaml -foptimization-record-file=opt.yaml")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
 
 include_directories(include)
 
@@ -33,17 +32,17 @@ endif()
 
 # Add ParlayLib
 include(FetchContent)
-# FetchContent_Declare(
-#   parlaylib
-#   GIT_REPOSITORY https://github.com/cmuparlay/parlaylib.git
-#   GIT_TAG        master
-# )
-# FetchContent_GetProperties(parlaylib)
-# if(NOT parlaylib_POPULATED)
-#   FetchContent_Populate(parlaylib)  
-#   add_subdirectory(${parlaylib_SOURCE_DIR} EXCLUDE_FROM_ALL)
-# endif()
-# target_link_libraries(BFS PRIVATE parlay)
+FetchContent_Declare(
+  parlaylib
+  GIT_REPOSITORY https://github.com/cmuparlay/parlaylib.git
+  GIT_TAG        master
+)
+FetchContent_GetProperties(parlaylib)
+if(NOT parlaylib_POPULATED)
+  FetchContent_Populate(parlaylib)  
+  add_subdirectory(${parlaylib_SOURCE_DIR} EXCLUDE_FROM_ALL)
+endif()
+target_link_libraries(BFS PRIVATE parlay)
 
 # Make a list of datasets and download them if they don't exist
 set(DATASETS

@@ -1,8 +1,10 @@
 #include <chrono>
+#include <cstdint>
 #include <graph.hpp>
 #include <iostream>
 #include <algorithm>
-#include <omp.h>
+// #include <omp.h>
+#include <unordered_map>
 #include <vector>
 #include <profiling.hpp>
 
@@ -10,16 +12,26 @@ namespace bfs {
 
 #define MARKED 1 << 31
 #define MSB 31
+#define ALPHA 14
+#define BETA 24
+
+typedef std::unordered_map<vidType, vidType> degrees_map;
+enum class Direction { TOP_DOWN, BOTTOM_UP };
 
 class Graph : public BaseGraph {
   eidType *rowptr;
   vidType *col;
+  degrees_map *degrees;
+  uint32_t unexplored_edges;
+  Direction dir;
   [[maybe_unused]] uint64_t N;
   [[maybe_unused]] uint64_t M;
 
 public:
-  Graph(eidType *rowptr, vidType *col, uint64_t N, uint64_t M)
-      : rowptr(rowptr), col(col), N(N), M(M) {}
+  Graph(eidType *rowptr, vidType *col, degrees_map *degrees, uint64_t N, uint64_t M)
+      : rowptr(rowptr), col(col), degrees(degrees), N(N), M(M) {
+    unexplored_edges = N;
+  }
   ~Graph() {}
 
   inline vidType copy_unmarked(vidType i) { return col[i] & ~(MARKED); }
@@ -62,7 +74,32 @@ public:
     std::cout << std::endl;
   }
 
+  uint32_t count_edges_frontier(std::vector<vidType> *frontier) {
+    uint32_t edges_frontier = 0;
+    for (const auto &v : *frontier) {
+      edges_frontier += degrees->at(v);
+    }
+    return edges_frontier;
+  }
+
+  bool switch_to_bottom_up(std::vector<vidType> *frontier) {
+    uint32_t edges_frontier = count_edges_frontier(frontier);
+    bool to_switch = edges_frontier > unexplored_edges / ALPHA;
+    unexplored_edges -= edges_frontier;
+    std::cout << "Edges in frontier: " << edges_frontier << ", unexplored edges: " << unexplored_edges << ", switch: " << to_switch << std::endl;
+    return to_switch;
+  }
+
+  bool switch_to_top_down(std::vector<vidType> *frontier) {
+    uint32_t edges_frontier = count_edges_frontier(frontier);
+    bool to_switch = frontier->size() < N / BETA;
+    unexplored_edges -= edges_frontier;
+    std::cout << "Frontier size: " << frontier->size() << ", total elements: " << N << ", switch: " << to_switch << std::endl;
+    return to_switch;
+  }
+
   void bottom_up_step(std::vector<vidType> this_frontier, std::vector<vidType> *next_frontier, weight_type distance) {
+    std::cout << "Bottom up step\n";
     for (vidType i = 0; i < N; i++) {
       if (is_marked(rowptr[i])) {
         continue;
@@ -74,12 +111,39 @@ public:
         if (!is_marked(neighbor)) {
           continue;
         }
-        if (std::find(this_frontier.begin(), this_frontier.end(), copy_unmarked(j)) !=
+        if (std::find(this_frontier.begin(), this_frontier.end(), neighbor) !=
             this_frontier.end()) {
-          set_distance(j, distance);
+          next_frontier->push_back(rowptr[i]);
+          mark(rowptr[i]);
           break;
         }
       }
+    }
+    for (const auto &v : this_frontier) {
+      set_distance(v, distance);
+    }
+  }
+
+  void top_down_step(std::vector<vidType> this_frontier, std::vector<vidType> *next_frontier, weight_type distance) {
+    std::cout << "Top down step\n";
+    for (const auto &v : this_frontier) {
+      vidType curr_index = v;
+      vidType neighbor_start = copy_unmarked(curr_index);
+      // Repeat until all neighbors have been visited except last one
+      do {
+        if (!is_marked(neighbor_start)) {
+          mark(neighbor_start);
+          next_frontier->push_back(neighbor_start);
+        }
+        curr_index++;
+        neighbor_start = copy_unmarked(curr_index);
+      } while (!is_marked(curr_index));
+      // Visit last neighbor
+      if (!is_marked(neighbor_start)) {
+        mark(neighbor_start);
+        next_frontier->push_back(neighbor_start);
+      }
+      set_distance(v, distance);
     }
   }
 
@@ -89,6 +153,7 @@ public:
     std::vector<vidType> this_frontier;
     weight_type distance = 0;
     vidType start = rowptr[source];
+    dir = Direction::TOP_DOWN;
     if (is_unconnected(source)) {
       distances[source] = 0;
       return;
@@ -101,32 +166,33 @@ public:
         return;
       } else {
         this_frontier.push_back(rowptr[neighbor]);
+        mark(rowptr[neighbor]);
         distance = 1;
       }
     } else {
       this_frontier.push_back(start);
+      mark(start);
     }
     while (!this_frontier.empty()) {
       std::vector<vidType> next_frontier;
-      for (const auto &v : this_frontier) {
-        vidType curr_index = v;
-        vidType neighbor_start = copy_unmarked(curr_index);
-        // Repeat until all neighbors have been visited except last one
-        do {
-          if (!is_marked(neighbor_start)) {
-            mark(neighbor_start);
-            next_frontier.push_back(neighbor_start);
-          }
-          curr_index++;
-          neighbor_start = copy_unmarked(curr_index);
-        } while (!is_marked(curr_index));
-        // Visit last neighbor
-        if (!is_marked(neighbor_start)) {
-          mark(neighbor_start);
-          next_frontier.push_back(neighbor_start);
+      if (dir == Direction::TOP_DOWN) {
+        if (switch_to_bottom_up(&this_frontier)) {
+          dir = Direction::BOTTOM_UP;
+          bottom_up_step(this_frontier, &next_frontier, distance);
+        } else {
+          top_down_step(this_frontier, &next_frontier, distance);
         }
-        set_distance(v, distance);
+      } else {
+        if (dir == Direction::BOTTOM_UP) {
+          if (switch_to_top_down(&this_frontier)) {
+          dir = Direction::TOP_DOWN;
+          top_down_step(this_frontier, &next_frontier, distance);
+          } else {
+            bottom_up_step(this_frontier, &next_frontier, distance);
+          }
+        }
       }
+      // top_down_step(this_frontier, &next_frontier, distance);
       distance++;
       std::swap(this_frontier, next_frontier);
     }
@@ -144,7 +210,8 @@ public:
   }
 };
 
-void merged_csr(eidType *rowptr, vidType *col, uint64_t N, uint64_t M) {
+void merged_csr(eidType *rowptr, vidType *col, degrees_map *degrees, uint64_t N, uint64_t M) {
+  
   for (vidType i = 0; i < N; i++) {
     // Check if node has more than one neighbor, otherwise don't replace
     // neighbor IDs with indices in col because it makes the computation
@@ -157,17 +224,21 @@ void merged_csr(eidType *rowptr, vidType *col, uint64_t N, uint64_t M) {
     }
     // Mark last neighbor of node
     col[rowptr[i + 1] - 1] = col[rowptr[i + 1] - 1] | MARKED;
+
+    degrees->insert({rowptr[i], rowptr[i + 1] - rowptr[i]});
   }
 }
 
 BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
                             uint64_t M) {
   auto t1 = std::chrono::high_resolution_clock::now();
-  merged_csr(rowptr, col, N, M);
+  degrees_map *degrees = new degrees_map();
+  degrees->reserve(N);
+  merged_csr(rowptr, col, degrees, N, M);
   auto t2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
   std::cout << "Preprocessing: " << ms_double.count() << "ms\n";
-  return new Graph(rowptr, col, N, M);
+  return new Graph(rowptr, col, degrees, N, M);
 }
 
 } // namespace bfs
