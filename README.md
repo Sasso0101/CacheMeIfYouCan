@@ -55,7 +55,7 @@ The datasets taken from the SNAP dataset collection were converted to undirected
 </table>
 
 ## Profiling
-The project is already set up to use the [LIKWID](https://github.com/RRZE-HPC/likwid) suite for profiling. The LIKWID suite must be installed on the system. To install the LIKWID suite, follow the instructions in the [README file](https://github.com/RRZE-HPC/likwid?tab=readme-ov-file#download-build-and-install) in the LIKWID repository. To list the available profiling groups, run `likwid-perfctr -a`. To view the detailed description of a group, run `likwid-perfctr -g <group> -h`.
+The project is already set up to use the [LIKWID](https://github.com/RRZE-HPC/likwid) suite for profiling. The LIKWID suite must be installed on the system. To install the LIKWID suite, follow the instructions in the [README file](https://github.com/RRZE-HPC/likwid?tab=readme-ov-file#download-build-and-install) in the LIKWID repository. To list the available profiling groups, run `likwid-perfctr -a`. To view the detailed description of a group, run `likwid-perfctr -g <group> -H`.
 
 For example, to view the `CYCLE_ACTIVITY` statistics (measures cycles spent waiting for data from the cache and memory hierarchy), run the following command:
 ```bash
