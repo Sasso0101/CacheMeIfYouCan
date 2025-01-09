@@ -1,19 +1,18 @@
+#include <cassert>
 #include <chrono>
 #include <cstdint>
 #include <graph.hpp>
 #include <iostream>
 #include <algorithm>
-// #include <omp.h>
-#include <unordered_map>
-#include <vector>
+#include <omp.h>
 #include <profiling.hpp>
+#include <vector>
 
 namespace bfs_hybrid_bitmap {
 
 #define ALPHA 14
 #define BETA 24
 
-typedef std::unordered_map<vidType, vidType> degrees_map;
 enum class Direction { TOP_DOWN, BOTTOM_UP };
 typedef std::vector<vidType> frontier;
 
@@ -46,8 +45,11 @@ public:
     std::cout << std::endl;
   }
 
-  inline void add_to_frontier(frontier *frontier, vidType v) {
-    frontier->push_back(v);
+  // reduction on frontier
+  #pragma omp declare reduction(vec_merge : std::vector<vidType> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
+
+  inline void add_to_frontier(frontier &frontier, vidType v) {
+    frontier.push_back(v);
     edges_frontier += rowptr[v + 1] - rowptr[v];
   }
 
@@ -67,8 +69,9 @@ public:
     return to_switch;
   }
 
-  void bottom_up_step(frontier this_frontier, frontier *next_frontier, weight_type distance, weight_type *distances) {
+  void bottom_up_step(frontier this_frontier, frontier &next_frontier, weight_type distance, weight_type *distances) {
     // std::cout << "Bottom up step\n";
+    #pragma omp parallel for reduction(+:edges_frontier) reduction(vec_merge: next_frontier)
     for (vidType i = 0; i < N; i++) {
       vidType start = rowptr[i];
       if (is_visited(i) || is_unconnected(i)) {
@@ -87,8 +90,9 @@ public:
     }
   }
 
-  void top_down_step(frontier this_frontier, frontier *next_frontier, weight_type distance, weight_type *distances) {
+  void top_down_step(frontier this_frontier, frontier &next_frontier, weight_type distance, weight_type *distances) {
     // std::cout << "Top down step\n";
+    #pragma omp parallel for reduction(+:edges_frontier) reduction(vec_merge: next_frontier) schedule(guided)
     for (const auto &v : this_frontier) {
       for (vidType i = rowptr[v]; i < rowptr[v + 1]; i++) {
         vidType neighbor = col[i];
@@ -106,7 +110,7 @@ public:
     LIKWID_MARKER_START("BFS");
     frontier this_frontier;
     dir = Direction::TOP_DOWN;
-    add_to_frontier(&this_frontier, source);
+    add_to_frontier(this_frontier, source);
     distances[source] = 0;
     visited[source] = true;
     weight_type distance = 1;
@@ -116,17 +120,17 @@ public:
       if (dir == Direction::TOP_DOWN) {
         if (switch_to_bottom_up(&this_frontier)) {
           dir = Direction::BOTTOM_UP;
-          bottom_up_step(this_frontier, &next_frontier, distance, distances);
+          bottom_up_step(this_frontier, next_frontier, distance, distances);
         } else {
-          top_down_step(this_frontier, &next_frontier, distance, distances);
+          top_down_step(this_frontier, next_frontier, distance, distances);
         }
       } else {
         if (dir == Direction::BOTTOM_UP) {
           if (switch_to_top_down(&this_frontier)) {
           dir = Direction::TOP_DOWN;
-          top_down_step(this_frontier, &next_frontier, distance, distances);
+          top_down_step(this_frontier, next_frontier, distance, distances);
           } else {
-            bottom_up_step(this_frontier, &next_frontier, distance, distances);
+            bottom_up_step(this_frontier, next_frontier, distance, distances);
           }
         }
       }
@@ -140,11 +144,6 @@ public:
     std::cout << "BFS: " << ms_double.count() << "ms\n";
   }
 };
-
-inline vidType get_degree(eidType *rowptr, vidType i) {
-  return rowptr[i + 1] - rowptr[i];
-}
-
 
 BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
                             uint64_t M) {
