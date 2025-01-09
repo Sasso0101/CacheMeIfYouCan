@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 include_directories(include)
 
 # Add sources
-add_executable(BFS src/bfs.cpp src/benchmark.cpp src/bfs_cached.cpp src/main.cpp)
+add_executable(BFS src/bfs.cpp src/benchmark.cpp src/bfs_cached.cpp src/bfs_hybrid_bitmap.cpp src/main.cpp)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)

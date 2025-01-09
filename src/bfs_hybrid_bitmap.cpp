@@ -8,13 +8,8 @@
 #include <vector>
 #include <profiling.hpp>
 
-namespace bfs {
+namespace bfs_hybrid_bitmap {
 
-#define VISITED_BIT 30
-#define MARKED_BIT 31
-#define MARKED 1 << MARKED_BIT
-#define VISITED 0b11 << VISITED_BIT
-#define VISITED_MASK 0b01 << VISITED_BIT
 #define ALPHA 14
 #define BETA 24
 
@@ -25,41 +20,23 @@ typedef std::vector<vidType> frontier;
 class Graph : public BaseGraph {
   eidType *rowptr;
   [[maybe_unused]] vidType *col;
-  vidType *merged;
   uint32_t unexplored_edges;
   Direction dir;
+  bool *visited;
   [[maybe_unused]] uint64_t N;
   [[maybe_unused]] uint64_t M;
   uint32_t edges_frontier;
 
 public:
-  Graph(eidType *rowptr, vidType *col, vidType *merged, uint64_t N, uint64_t M)
-      : rowptr(rowptr), col(col), merged(merged), N(N), M(M) {
+  Graph(eidType *rowptr, vidType *col, bool *visited, uint64_t N, uint64_t M)
+      : rowptr(rowptr), col(col), visited(visited), N(N), M(M) {
     unexplored_edges = M;
   }
   ~Graph() {}
 
-  inline vidType copy_unmarked(vidType i) { return merged[i] & ~(VISITED); }
+  inline bool is_visited(vidType i) { return visited[i]; }
 
-  inline bool is_marked(vidType i) { return ((merged[i]) >> MARKED_BIT) != 0; }
-  inline bool is_visited(vidType i) { return ((merged[i] & VISITED_MASK) >> VISITED_BIT) != 0; }
-
-  inline void set_distance(vidType i, weight_type distance) {
-    merged[i] = distance | VISITED;
-  }
-
-  inline bool is_unconnected(vidType i) { return (merged[i] & ~(VISITED)) == 0; }
-
-  inline bool is_leaf(vidType i) { return (rowptr[i] == rowptr[i + 1] - 1); }
-
-  void compute_distances(weight_type *distances, vidType source) {
-    for (uint64_t i = 0; i < N; i++) {
-      if (is_visited(rowptr[i])) {
-        distances[i] = copy_unmarked(rowptr[i]);
-      }
-    }
-    distances[source] = 0;
-  }
+  inline bool is_unconnected(vidType i) { return rowptr[i] == rowptr[i+1]; }
 
   void print_frontier(frontier &frontier) {
     std::cout << "Frontier: ";
@@ -71,7 +48,7 @@ public:
 
   inline void add_to_frontier(frontier *frontier, vidType v) {
     frontier->push_back(v);
-    edges_frontier += copy_unmarked(v);
+    edges_frontier += rowptr[v + 1] - rowptr[v];
   }
 
   bool switch_to_bottom_up(frontier *frontier) {
@@ -90,32 +67,35 @@ public:
     return to_switch;
   }
 
-  void bottom_up_step(frontier this_frontier, frontier *next_frontier, weight_type distance) {
+  void bottom_up_step(frontier this_frontier, frontier *next_frontier, weight_type distance, weight_type *distances) {
     // std::cout << "Bottom up step\n";
     for (vidType i = 0; i < N; i++) {
       vidType start = rowptr[i];
-      if (is_visited(start) || is_unconnected(start)) {
+      if (is_visited(i) || is_unconnected(i)) {
         continue;
       }
-      for (vidType j = start + 1; j < rowptr[i+1]; j++) {
-        if (is_visited(merged[j]) && copy_unmarked(merged[j]) == distance - 1) {
+      for (vidType j = start; j < rowptr[i+1]; j++) {
+        vidType neighbor = col[j];
+        if (is_visited(neighbor) && distances[neighbor] == distance - 1) {
           // If neighbor is in frontier, add this vertex to next frontier
-          add_to_frontier(next_frontier, start);
-          set_distance(start, distance);
+          add_to_frontier(next_frontier, i);
+          distances[i] = distance;
+          visited[i] = true;
           break;
         }
       }
     }
   }
 
-  void top_down_step(frontier this_frontier, frontier *next_frontier, weight_type distance) {
+  void top_down_step(frontier this_frontier, frontier *next_frontier, weight_type distance, weight_type *distances) {
     // std::cout << "Top down step\n";
     for (const auto &v : this_frontier) {
-      for (vidType i = v + 1; (i < N + M) && !is_marked(i); i++) {
-        vidType neighbor = merged[i];
+      for (vidType i = rowptr[v]; i < rowptr[v + 1]; i++) {
+        vidType neighbor = col[i];
         if (!is_visited(neighbor)) {
           add_to_frontier(next_frontier, neighbor);
-          set_distance(neighbor, distance);
+          distances[neighbor] = distance;
+          visited[neighbor] = true;
         }
       }
     }
@@ -125,10 +105,10 @@ public:
     auto t1 = std::chrono::high_resolution_clock::now();
     LIKWID_MARKER_START("BFS");
     frontier this_frontier;
-    vidType start = rowptr[source];
     dir = Direction::TOP_DOWN;
-    add_to_frontier(&this_frontier, start);
-    set_distance(start, 0);
+    add_to_frontier(&this_frontier, source);
+    distances[source] = 0;
+    visited[source] = true;
     weight_type distance = 1;
     while (!this_frontier.empty()) {
       // print_frontier(this_frontier);
@@ -136,17 +116,17 @@ public:
       if (dir == Direction::TOP_DOWN) {
         if (switch_to_bottom_up(&this_frontier)) {
           dir = Direction::BOTTOM_UP;
-          bottom_up_step(this_frontier, &next_frontier, distance);
+          bottom_up_step(this_frontier, &next_frontier, distance, distances);
         } else {
-          top_down_step(this_frontier, &next_frontier, distance);
+          top_down_step(this_frontier, &next_frontier, distance, distances);
         }
       } else {
         if (dir == Direction::BOTTOM_UP) {
           if (switch_to_top_down(&this_frontier)) {
           dir = Direction::TOP_DOWN;
-          top_down_step(this_frontier, &next_frontier, distance);
+          top_down_step(this_frontier, &next_frontier, distance, distances);
           } else {
-            bottom_up_step(this_frontier, &next_frontier, distance);
+            bottom_up_step(this_frontier, &next_frontier, distance, distances);
           }
         }
       }
@@ -158,12 +138,6 @@ public:
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> ms_double = t2 - t1;
     std::cout << "BFS: " << ms_double.count() << "ms\n";
-
-    t1 = std::chrono::high_resolution_clock::now();
-    compute_distances(distances, source);
-    t2 = std::chrono::high_resolution_clock::now();
-    ms_double = t2 - t1;
-    std::cout << "Postprocessing: " << ms_double.count() << "ms\n";
   }
 };
 
@@ -171,32 +145,16 @@ inline vidType get_degree(eidType *rowptr, vidType i) {
   return rowptr[i + 1] - rowptr[i];
 }
 
-void merged_csr(eidType *rowptr, vidType *col, vidType *merged, uint64_t N, uint64_t M) {
-  vidType merged_index = 0;
-  // Add degree of each vertex to the start of its neighbor list
-  for (vidType i = 0; i < N; i++) {
-    vidType start = rowptr[i];
-    merged[merged_index++] = get_degree(rowptr, i) | MARKED;
-    for (vidType j = start; j < rowptr[i + 1]; j++, merged_index++) {
-      merged[merged_index] = rowptr[col[j]] + col[j];
-    }
-  }
-  // Fix rowptr indices by adding offset caused by adding the degree to the start of
-  // each neighbor list
-  for (vidType i = 0; i <= N; i++) {
-    rowptr[i] = rowptr[i] + i;
-  }
-}
 
 BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
                             uint64_t M) {
   auto t1 = std::chrono::high_resolution_clock::now();
-  vidType *merged = new vidType[M+N];
-  merged_csr(rowptr, col, merged, N, M);
+  bool *visited = new bool[N];
+  std::fill(visited, visited + N, false);
   auto t2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
   std::cout << "Preprocessing: " << ms_double.count() << "ms\n";
-  return new Graph(rowptr, col, merged, N, M);
+  return new Graph(rowptr, col, visited, N, M);
 }
 
-} // namespace bfs
+}
