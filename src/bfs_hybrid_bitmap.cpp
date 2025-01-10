@@ -6,29 +6,28 @@
 #include <algorithm>
 #include <omp.h>
 #include <profiling.hpp>
-#include <vector>
 
 namespace bfs_hybrid_bitmap {
 
 #define ALPHA 14
 #define BETA 24
+#define VISITED_BIT 31
+#define MARKED 1 << VISITED_BIT
 
 enum class Direction { TOP_DOWN, BOTTOM_UP };
-typedef std::vector<vidType> frontier;
 
 class Graph : public BaseGraph {
   eidType *rowptr;
   [[maybe_unused]] vidType *col;
-  uint32_t unexplored_edges;
+  uint32_t unexplored_edges, edges_frontier, vertices_frontier;
   Direction dir;
-  bool *visited;
+  bool *this_frontier, *next_frontier, *visited;
   [[maybe_unused]] uint64_t N;
   [[maybe_unused]] uint64_t M;
-  uint32_t edges_frontier;
 
 public:
-  Graph(eidType *rowptr, vidType *col, bool *visited, uint64_t N, uint64_t M)
-      : rowptr(rowptr), col(col), visited(visited), N(N), M(M) {
+  Graph(eidType *rowptr, vidType *col, bool *this_frontier, bool *next_frontier, bool *visited, uint64_t N, uint64_t M)
+      : rowptr(rowptr), col(col), this_frontier(this_frontier), next_frontier(next_frontier), visited(visited), N(N), M(M) {
     unexplored_edges = M;
   }
   ~Graph() {}
@@ -37,70 +36,71 @@ public:
 
   inline bool is_unconnected(vidType i) { return rowptr[i] == rowptr[i+1]; }
 
-  void print_frontier(frontier &frontier) {
+  void print_frontier(bool* frontier) {
     std::cout << "Frontier: ";
-    for (const auto &v : frontier) {
-      std::cout << v << " ";
+    for (vidType i = 0; i < N; i++) {
+      if (frontier[i]) {
+        std::cout << i << " ";
+      }
     }
     std::cout << std::endl;
   }
 
-  // reduction on frontier
-  #pragma omp declare reduction(vec_merge : std::vector<vidType> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
-
-  inline void add_to_frontier(frontier &frontier, vidType v) {
-    frontier.push_back(v);
-    edges_frontier += rowptr[v + 1] - rowptr[v];
+  inline void add_to_frontier(bool *frontier, weight_type *distances, vidType v, weight_type distance) {
+    frontier[v] = true;
+    visited[v] = true;
+    vertices_frontier += 1;
+    // edges_frontier += rowptr[v+1] - rowptr[v];
+    // distances[v] = distance;
   }
-
-  bool switch_to_bottom_up(frontier *frontier) {
-    bool to_switch = edges_frontier > unexplored_edges / ALPHA;
-    unexplored_edges -= edges_frontier;
-    // std::cout << "Edges in frontier: " << edges_frontier << ", unexplored edges: " << unexplored_edges << ", switch: " << to_switch << std::endl;
-    edges_frontier = 0;
-    return to_switch;
-  }
-
-  bool switch_to_top_down(frontier *frontier) {
-    bool to_switch = frontier->size() < N / BETA;
-    unexplored_edges -= edges_frontier;
-    // std::cout << "Frontier size: " << frontier->size() << ", total elements: " << N << ", switch: " << to_switch << std::endl;
-    edges_frontier = 0;
-    return to_switch;
-  }
-
-  void bottom_up_step(frontier this_frontier, frontier &next_frontier, weight_type distance, weight_type *distances) {
+  
+  void bottom_up_step(bool* this_frontier, bool* next_frontier, weight_type distance, weight_type *distances) {
     // std::cout << "Bottom up step\n";
-    #pragma omp parallel for reduction(+:edges_frontier) reduction(vec_merge: next_frontier)
+    #pragma omp parallel for reduction(+:edges_frontier, vertices_frontier) schedule(static, 128)
     for (vidType i = 0; i < N; i++) {
-      vidType start = rowptr[i];
-      if (is_visited(i) || is_unconnected(i)) {
+      if (is_visited(i)) {
         continue;
       }
-      for (vidType j = start; j < rowptr[i+1]; j++) {
+      for (vidType j = rowptr[i]; j < rowptr[i+1]; j++) {
         vidType neighbor = col[j];
-        if (is_visited(neighbor) && distances[neighbor] == distance - 1) {
+        if (this_frontier[neighbor] == true) {
           // If neighbor is in frontier, add this vertex to next frontier
-          add_to_frontier(next_frontier, i);
-          distances[i] = distance;
-          visited[i] = true;
+          add_to_frontier(next_frontier, distances, i, distance);
           break;
         }
       }
     }
+
+    #pragma omp parallel for schedule(static, 128)
+    for (int i=0 ; i<N; i++){
+      if (next_frontier[i] == true) {
+        edges_frontier += rowptr[i+1] - rowptr[i];
+        vertices_frontier += 1;
+        distances[i] = distance;
+      }
+    }
   }
 
-  void top_down_step(frontier this_frontier, frontier &next_frontier, weight_type distance, weight_type *distances) {
+  void top_down_step(bool* this_frontier, bool* next_frontier, weight_type distance, weight_type *distances) {
     // std::cout << "Top down step\n";
-    #pragma omp parallel for reduction(+:edges_frontier) reduction(vec_merge: next_frontier) schedule(guided)
-    for (const auto &v : this_frontier) {
-      for (vidType i = rowptr[v]; i < rowptr[v + 1]; i++) {
-        vidType neighbor = col[i];
-        if (!is_visited(neighbor)) {
-          add_to_frontier(next_frontier, neighbor);
-          distances[neighbor] = distance;
-          visited[neighbor] = true;
+    #pragma omp parallel for reduction(+:edges_frontier, vertices_frontier) schedule(static, 128)
+    for (int v = 0; v < N; v++) {
+      if (this_frontier[v] == true) {
+        for (vidType i = rowptr[v]; i < rowptr[v + 1]; i++) {
+          vidType neighbor = col[i];
+          if (!is_visited(neighbor)) {
+            add_to_frontier(next_frontier, distances, neighbor, distance);
+          }
         }
+      }
+    }
+
+    #pragma omp parallel for schedule(static, 128)
+    for (int i=0 ; i<N; i++){
+      if (next_frontier[i] == true) {
+        edges_frontier += rowptr[i+1] - rowptr[i];
+        vertices_frontier += 1;
+        distances[i] = distance;
       }
     }
   }
@@ -108,35 +108,36 @@ public:
   void BFS(vidType source, weight_type *distances) {
     auto t1 = std::chrono::high_resolution_clock::now();
     LIKWID_MARKER_START("BFS");
-    frontier this_frontier;
     dir = Direction::TOP_DOWN;
-    add_to_frontier(this_frontier, source);
+    add_to_frontier(this_frontier, distances, source, 0);
+    edges_frontier += rowptr[source+1] - rowptr[source];
+    vertices_frontier += 1;
     distances[source] = 0;
-    visited[source] = true;
     weight_type distance = 1;
-    while (!this_frontier.empty()) {
-      // print_frontier(this_frontier);
-      frontier next_frontier;
+    do {
+      if (dir == Direction::BOTTOM_UP && vertices_frontier < N / BETA) {
+        dir = Direction::TOP_DOWN;
+      } else if (dir == Direction::TOP_DOWN && edges_frontier > unexplored_edges / ALPHA) {
+        dir = Direction::BOTTOM_UP;
+      }
+      unexplored_edges -= edges_frontier;
+      edges_frontier = 0;
+      vertices_frontier = 0;
       if (dir == Direction::TOP_DOWN) {
-        if (switch_to_bottom_up(&this_frontier)) {
-          dir = Direction::BOTTOM_UP;
-          bottom_up_step(this_frontier, next_frontier, distance, distances);
-        } else {
-          top_down_step(this_frontier, next_frontier, distance, distances);
-        }
+        top_down_step(this_frontier, next_frontier, distance, distances);
       } else {
-        if (dir == Direction::BOTTOM_UP) {
-          if (switch_to_top_down(&this_frontier)) {
-          dir = Direction::TOP_DOWN;
-          top_down_step(this_frontier, next_frontier, distance, distances);
-          } else {
-            bottom_up_step(this_frontier, next_frontier, distance, distances);
-          }
-        }
+        bottom_up_step(this_frontier, next_frontier, distance, distances);
+      }
+      if (vertices_frontier == 0) {
+        break;
+      }
+      std::swap(this_frontier, next_frontier);
+      #pragma omp parallel for
+      for (int i=0 ; i<N; i++){
+        next_frontier[i] = false;
       }
       distance++;
-      std::swap(this_frontier, next_frontier);
-    }
+    } while(true);
     LIKWID_MARKER_STOP("BFS");
     LIKWID_MARKER_CLOSE;
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -148,12 +149,16 @@ public:
 BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
                             uint64_t M) {
   auto t1 = std::chrono::high_resolution_clock::now();
+  bool *this_frontier = new bool[N];
+  bool *next_frontier = new bool[N];
   bool *visited = new bool[N];
+  std::fill(this_frontier, this_frontier + N, false);
+  std::fill(next_frontier, next_frontier + N, false);
   std::fill(visited, visited + N, false);
   auto t2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
   std::cout << "Preprocessing: " << ms_double.count() << "ms\n";
-  return new Graph(rowptr, col, visited, N, M);
+  return new Graph(rowptr, col, this_frontier, next_frontier, visited, N, M);
 }
 
 }
