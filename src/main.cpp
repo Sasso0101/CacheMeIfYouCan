@@ -4,6 +4,7 @@
 #include <bfs.hpp>
 #include <bfs_cached.hpp>
 #include <bfs_hybrid_bitmap.hpp>
+#include <test_openmp.hpp>
 #include <chrono>
 #include <cstdint>
 #include <fstream>
@@ -109,7 +110,7 @@ int main(int argc, char **argv) {
   for (uint64_t i = 0; i < N; i++) {
     distances_bfs[i] = std::numeric_limits<weight_type>::max();
   }
-  g = bfs_hybrid_bitmap::initialize_graph(rowptr, col, N, M);
+  g = bfs::initialize_graph(rowptr, col, N, M);
   g->BFS(start_node, distances_bfs);
 
   if (check_correctness(distances_ref, distances_bfs, N)) {

@@ -3,7 +3,7 @@
 #include <graph.hpp>
 #include <iostream>
 #include <algorithm>
-// #include <omp.h>
+#include <omp.h>
 #include <unordered_map>
 #include <vector>
 #include <profiling.hpp>
@@ -53,6 +53,7 @@ public:
   inline bool is_leaf(vidType i) { return (rowptr[i] == rowptr[i + 1] - 1); }
 
   void compute_distances(weight_type *distances, vidType source) {
+    #pragma omp parallel for schedule(auto)
     for (uint64_t i = 0; i < N; i++) {
       if (is_visited(rowptr[i])) {
         distances[i] = copy_unmarked(rowptr[i]);
@@ -69,12 +70,12 @@ public:
     std::cout << std::endl;
   }
 
-  inline void add_to_frontier(frontier *frontier, vidType v) {
-    frontier->push_back(v);
+  inline void add_to_frontier(frontier &frontier, vidType v) {
+    frontier.push_back(v);
     edges_frontier += copy_unmarked(v);
   }
 
-  bool switch_to_bottom_up(frontier *frontier) {
+  bool switch_to_bottom_up(frontier &frontier) {
     bool to_switch = edges_frontier > unexplored_edges / ALPHA;
     unexplored_edges -= edges_frontier;
     // std::cout << "Edges in frontier: " << edges_frontier << ", unexplored edges: " << unexplored_edges << ", switch: " << to_switch << std::endl;
@@ -82,16 +83,17 @@ public:
     return to_switch;
   }
 
-  bool switch_to_top_down(frontier *frontier) {
-    bool to_switch = frontier->size() < N / BETA;
+  bool switch_to_top_down(frontier &frontier) {
+    bool to_switch = frontier.size() < N / BETA;
     unexplored_edges -= edges_frontier;
     // std::cout << "Frontier size: " << frontier->size() << ", total elements: " << N << ", switch: " << to_switch << std::endl;
     edges_frontier = 0;
     return to_switch;
   }
 
-  void bottom_up_step(frontier this_frontier, frontier *next_frontier, weight_type distance) {
+  void bottom_up_step(frontier this_frontier, frontier &next_frontier, weight_type distance) {
     // std::cout << "Bottom up step\n";
+    #pragma omp parallel for reduction(vec_add: next_frontier) reduction(+: edges_frontier) schedule(auto)
     for (vidType i = 0; i < N; i++) {
       vidType start = rowptr[i];
       if (is_visited(start) || is_unconnected(start)) {
@@ -108,10 +110,14 @@ public:
     }
   }
 
-  void top_down_step(frontier this_frontier, frontier *next_frontier, weight_type distance) {
+  #pragma omp declare reduction(vec_add: std::vector<vidType>: \
+    omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
+
+  void top_down_step(frontier this_frontier, frontier &next_frontier, weight_type distance) {
     // std::cout << "Top down step\n";
+    #pragma omp parallel for reduction(vec_add: next_frontier) reduction(+: edges_frontier) schedule(auto)
     for (const auto &v : this_frontier) {
-      for (vidType i = v + 1; (i < N + M) && !is_marked(i); i++) {
+      for (vidType i = v + 1; !is_marked(i) && (i < N + M); ++i) {
         vidType neighbor = merged[i];
         if (!is_visited(neighbor)) {
           add_to_frontier(next_frontier, neighbor);
@@ -127,31 +133,32 @@ public:
     frontier this_frontier;
     vidType start = rowptr[source];
     dir = Direction::TOP_DOWN;
-    add_to_frontier(&this_frontier, start);
+    add_to_frontier(this_frontier, start);
     set_distance(start, 0);
     weight_type distance = 1;
     while (!this_frontier.empty()) {
       // print_frontier(this_frontier);
       frontier next_frontier;
+      next_frontier.reserve(this_frontier.size());
       if (dir == Direction::TOP_DOWN) {
-        if (switch_to_bottom_up(&this_frontier)) {
+        if (switch_to_bottom_up(this_frontier)) {
           dir = Direction::BOTTOM_UP;
-          bottom_up_step(this_frontier, &next_frontier, distance);
+          bottom_up_step(this_frontier, next_frontier, distance);
         } else {
-          top_down_step(this_frontier, &next_frontier, distance);
+          top_down_step(this_frontier, next_frontier, distance);
         }
       } else {
         if (dir == Direction::BOTTOM_UP) {
-          if (switch_to_top_down(&this_frontier)) {
+          if (switch_to_top_down(this_frontier)) {
           dir = Direction::TOP_DOWN;
-          top_down_step(this_frontier, &next_frontier, distance);
+          top_down_step(this_frontier, next_frontier, distance);
           } else {
-            bottom_up_step(this_frontier, &next_frontier, distance);
+            bottom_up_step(this_frontier, next_frontier, distance);
           }
         }
       }
       distance++;
-      std::swap(this_frontier, next_frontier);
+      this_frontier = std::move(next_frontier);
     }
     LIKWID_MARKER_STOP("BFS");
     LIKWID_MARKER_CLOSE;
