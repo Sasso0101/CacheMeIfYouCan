@@ -1,9 +1,7 @@
 #include <cassert>
-#include <chrono>
 #include <cstdint>
 #include <graph.hpp>
 #include <iostream>
-#include <algorithm>
 #include <omp.h>
 #include <profiling.hpp>
 

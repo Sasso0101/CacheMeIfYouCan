@@ -1,10 +1,6 @@
-#include <chrono>
-#include <cstdint>
 #include <graph.hpp>
 #include <iostream>
-#include <algorithm>
 #include <omp.h>
-#include <unordered_map>
 #include <vector>
 #include <profiling.hpp>
 
@@ -18,7 +14,6 @@ namespace bfs {
 #define ALPHA 14
 #define BETA 24
 
-typedef std::unordered_map<vidType, vidType> degrees_map;
 enum class Direction { TOP_DOWN, BOTTOM_UP };
 typedef std::vector<vidType> frontier;
 
@@ -28,24 +23,27 @@ class Graph : public BaseGraph {
   vidType *merged;
   uint32_t unexplored_edges;
   Direction dir;
+  bool *visited;
   [[maybe_unused]] uint64_t N;
   [[maybe_unused]] uint64_t M;
   uint32_t edges_frontier;
 
 public:
-  Graph(eidType *rowptr, vidType *col, vidType *merged, uint64_t N, uint64_t M)
-      : rowptr(rowptr), col(col), merged(merged), N(N), M(M) {
+  Graph(eidType *rowptr, vidType *col, vidType *merged, bool *visited, uint64_t N, uint64_t M)
+      : rowptr(rowptr), col(col), merged(merged), visited(visited), N(N), M(M) {
     unexplored_edges = M;
   }
   ~Graph() {}
 
   inline vidType copy_unmarked(vidType i) { return merged[i] & ~(VISITED); }
 
-  inline bool is_marked(vidType i) { return ((merged[i]) >> MARKED_BIT) != 0; }
-  inline bool is_visited(vidType i) { return ((merged[i] & VISITED_MASK) >> VISITED_BIT) != 0; }
+  inline bool is_marked(vidType i) { return ((merged[i]) & MARKED) != 0; }
+  // inline bool is_visited(vidType i) { return ((merged[i] & VISITED_MASK) >> VISITED_BIT) != 0; }
+  inline bool is_visited(vidType i) { return visited[i]; }
 
   inline void set_distance(vidType i, weight_type distance) {
     merged[i] = distance | VISITED;
+    visited[i] = true;
   }
 
   inline bool is_unconnected(vidType i) { return (merged[i] & ~(VISITED)) == 0; }
@@ -128,8 +126,6 @@ public:
   }
 
   void BFS(vidType source, weight_type *distances) {
-    auto t1 = std::chrono::high_resolution_clock::now();
-    LIKWID_MARKER_START("BFS");
     frontier this_frontier;
     vidType start = rowptr[source];
     dir = Direction::TOP_DOWN;
@@ -160,17 +156,7 @@ public:
       distance++;
       this_frontier = std::move(next_frontier);
     }
-    LIKWID_MARKER_STOP("BFS");
-    LIKWID_MARKER_CLOSE;
-    auto t2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
-    std::cout << "BFS: " << ms_double.count() << "ms\n";
-
-    t1 = std::chrono::high_resolution_clock::now();
     compute_distances(distances, source);
-    t2 = std::chrono::high_resolution_clock::now();
-    ms_double = t2 - t1;
-    std::cout << "Postprocessing: " << ms_double.count() << "ms\n";
   }
 };
 
@@ -197,13 +183,11 @@ void merged_csr(eidType *rowptr, vidType *col, vidType *merged, uint64_t N, uint
 
 BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
                             uint64_t M) {
-  auto t1 = std::chrono::high_resolution_clock::now();
   vidType *merged = new vidType[M+N];
   merged_csr(rowptr, col, merged, N, M);
-  auto t2 = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
-  std::cout << "Preprocessing: " << ms_double.count() << "ms\n";
-  return new Graph(rowptr, col, merged, N, M);
+  bool *visited = new bool[N+M];
+  std::fill(visited, visited + N + M, false);
+  return new Graph(rowptr, col, merged, visited, N, M);
 }
 
 } // namespace bfs

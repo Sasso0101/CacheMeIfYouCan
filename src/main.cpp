@@ -72,8 +72,8 @@ int main(int argc, char **argv) {
   // <source vertex> <destination vertex>
   const u_int64_t N = std::stoi(argv[2]);
   const u_int64_t M = std::stoi(argv[3]);
-  eidType *rowptr = new eidType[N + 1]{};
-  vidType *col = new vidType[M]{};
+  eidType *rowptr = new eidType[N + 1];
+  vidType *col = new vidType[M];
   eidType i;
   vidType j;
   vidType start_node = std::stoi(argv[4]);
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
   std::cout << "Graph loaded!" << std::endl;
 
   BaseGraph *g;
-  weight_type *distances_ref = new weight_type[N]{};
+  weight_type *distances_ref = new weight_type[N];
   for (uint64_t i = 0; i < N; i++) {
     distances_ref[i] = std::numeric_limits<weight_type>::max();
   }
@@ -106,12 +106,17 @@ int main(int argc, char **argv) {
   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
   std::cout << "Reference: " << ms_double.count() << "ms\n";
 
-  weight_type *distances_bfs = new weight_type[N]{};
+  weight_type *distances_bfs = new weight_type[N];
   for (uint64_t i = 0; i < N; i++) {
     distances_bfs[i] = std::numeric_limits<weight_type>::max();
   }
   g = bfs::initialize_graph(rowptr, col, N, M);
+  t1 = std::chrono::high_resolution_clock::now();
   g->BFS(start_node, distances_bfs);
+  t2 = std::chrono::high_resolution_clock::now();
+
+  ms_double = t2 - t1;
+  std::cout << "BFS: " << ms_double.count() << "ms\n";
 
   if (check_correctness(distances_ref, distances_bfs, N)) {
     return 0;

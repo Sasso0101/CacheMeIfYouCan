@@ -1,7 +1,5 @@
 #include "graph.hpp"
-#include <cmath>
 #include <iostream>
-#include <queue>
 #include <omp.h>
 #include <vector>
 
