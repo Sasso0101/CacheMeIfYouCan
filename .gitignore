@@ -5,3 +5,7 @@ build/
 output/
 datasets/
 **/*_distances.txt
+cmake-build-debug/
+cmake-build-release/
+.idea/
+*.txt

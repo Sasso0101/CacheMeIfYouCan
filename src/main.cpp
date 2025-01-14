@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <cstdlib>
 
 #define OUTPUT_FOLDER "output/"
 
@@ -53,12 +54,19 @@ bool check_correctness(weight_type *distances_ref, weight_type *distances_bfs,
   return correct;
 }
 
-int main(int argc, char **argv) {
-  if (argc != 5) {
+int main(const int argc, char **argv) {
+  vidType start_node = 0;
+  if (argc == 4) {
+    std::cout << "Start node: " << std::endl;
+    std::cin >> start_node;
+  }
+  else if (argc != 5) {
     std::cerr << "Usage: " << argv[0]
               << " <graph file> <num vertices> <num edges> <start node>"
               << std::endl;
     exit(1);
+  } else {
+    start_node = std::stoi(argv[4]);
   }
   // Read graph from file
   std::fstream file;
@@ -72,11 +80,10 @@ int main(int argc, char **argv) {
   // <source vertex> <destination vertex>
   const u_int64_t N = std::stoi(argv[2]);
   const u_int64_t M = std::stoi(argv[3]);
-  eidType *rowptr = new eidType[N + 1];
-  vidType *col = new vidType[M];
+  auto *rowptr = new eidType[N + 1];
+  auto *col = new vidType[M];
   eidType i;
   vidType j;
-  vidType start_node = std::stoi(argv[4]);
   vidType free = 0;
   rowptr[0] = 0;
   file >> i >> j;
@@ -91,22 +98,21 @@ int main(int argc, char **argv) {
 
   std::cout << "Graph loaded!" << std::endl;
 
-  BaseGraph *g;
-  weight_type *distances_ref = new weight_type[N];
-  for (uint64_t i = 0; i < N; i++) {
+  auto *distances_ref = new weight_type[N];
+  for (vidType i = 0; i < N; i++) {
     distances_ref[i] = std::numeric_limits<weight_type>::max();
   }
   LIKWID_MARKER_INIT;
   LIKWID_MARKER_THREADINIT;
   auto t1 = std::chrono::high_resolution_clock::now();
-  g = benchmark::initialize_graph(rowptr, col, N, M);
+  BaseGraph *g = benchmark::initialize_graph(rowptr, col, N, M);
   g->BFS(start_node, distances_ref);
   auto t2 = std::chrono::high_resolution_clock::now();
 
   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
   std::cout << "Reference: " << ms_double.count() << "ms\n";
 
-  weight_type *distances_bfs = new weight_type[N];
+  auto *distances_bfs = new weight_type[N];
   for (uint64_t i = 0; i < N; i++) {
     distances_bfs[i] = std::numeric_limits<weight_type>::max();
   }

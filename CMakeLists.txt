@@ -66,42 +66,42 @@ endforeach()
 
 # Datasets
 add_custom_target(test
-    COMMAND BFS datasets/test.txt 16 32 $(SOURCE)
+    COMMAND BFS datasets/test.txt 16 32 $ENV{SOURCE}
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 add_custom_target(powergrid
-    COMMAND BFS datasets/powergrid.txt 4942 13190 $(SOURCE)
+    COMMAND BFS datasets/powergrid.txt 4942 13190 $ENV{SOURCE}
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 add_custom_target(random
-    COMMAND BFS datasets/random_1k_5k.txt 1000 9940 $(SOURCE)
+    COMMAND BFS datasets/random_1k_5k.txt 1000 9940 $ENV{SOURCE}
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 add_custom_target(twitch
-    COMMAND BFS datasets/twitch.txt 168114 13595114 $(SOURCE)
+    COMMAND BFS datasets/twitch.txt 168114 13595114 $ENV{SOURCE}
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 add_custom_target(epinions
-    COMMAND BFS datasets/epinions.txt 75888 811480 $(SOURCE)
+    COMMAND BFS datasets/epinions.txt 75888 811480 $ENV{SOURCE}
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 add_custom_target(unconnected
-    COMMAND BFS datasets/unconnected.txt 4 2 $(SOURCE)
+    COMMAND BFS datasets/unconnected.txt 4 2 $ENV{SOURCE}
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 add_custom_target(pokec
-    COMMAND BFS datasets/pokec.txt 1632804 44603928 $(SOURCE)
+    COMMAND BFS datasets/pokec.txt 1632804 44603928 $ENV{SOURCE}
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 add_custom_target(roadnet-ca
-    COMMAND BFS datasets/roadnet-ca.txt 1971281 5533214 $(SOURCE)
+    COMMAND BFS datasets/roadnet-ca.txt 1971281 5533214 $ENV{SOURCE}
     DEPENDS BFS
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
