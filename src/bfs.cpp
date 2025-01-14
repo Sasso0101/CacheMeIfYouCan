@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <graph.hpp>
 #include <iostream>
 #include <omp.h>
@@ -28,7 +29,7 @@ class Graph : public BaseGraph {
   Direction dir;
   [[maybe_unused]] uint64_t N;
   [[maybe_unused]] uint64_t M;
-  uint32_t edges_frontier;
+  uint32_t edges_frontier, edges_frontier_old;
 
 public:
   Graph(eidType *rowptr, vidType *col, vidType *merged, uint64_t N, uint64_t M)
@@ -70,22 +71,6 @@ public:
     edges_frontier += copy_unmarked(v);
   }
 
-  bool switch_to_bottom_up(frontier &frontier) {
-    bool to_switch = edges_frontier > unexplored_edges / ALPHA;
-    unexplored_edges -= edges_frontier;
-    // std::cout << "Edges in frontier: " << edges_frontier << ", unexplored edges: " << unexplored_edges << ", switch: " << to_switch << std::endl;
-    edges_frontier = 0;
-    return to_switch;
-  }
-
-  bool switch_to_top_down(frontier &frontier) {
-    bool to_switch = frontier.size() < N / BETA;
-    unexplored_edges -= edges_frontier;
-    // std::cout << "Frontier size: " << frontier->size() << ", total elements: " << N << ", switch: " << to_switch << std::endl;
-    edges_frontier = 0;
-    return to_switch;
-  }
-
   #pragma omp declare reduction(vec_add: std::vector<vidType>, std::vector<std::pair<vidType, bool>>: \
     omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
 
@@ -108,10 +93,10 @@ public:
     }
   }
 
-  void top_down_step(frontier this_frontier, frontier &next_frontier, weight_type distance) {
+    void top_down_step(frontier this_frontier, frontier &next_frontier, weight_type distance) {
     // std::cout << "Top down step\n";
     // print merged
-    #pragma omp parallel for reduction(vec_add: next_frontier) reduction(+: edges_frontier) schedule(auto)
+    #pragma omp parallel for reduction(vec_add: next_frontier) reduction(+: edges_frontier) schedule(auto) if (edges_frontier_old > 150)
     for (const auto &v : this_frontier) {
       for (vidType i = v + 1; !IS_MARKED(i); i++) {
         vidType neighbor = merged[i];
@@ -122,6 +107,7 @@ public:
       }
     }
   }
+
 
   void BFS(vidType source, weight_type *distances) {
     frontier this_frontier;
@@ -135,22 +121,18 @@ public:
       // std::cout << "Edges in frontier " << edges_frontier << ", vertices in frontier " << this_frontier.size();
       frontier next_frontier;
       next_frontier.reserve(this_frontier.size());
+      if (dir == Direction::BOTTOM_UP && this_frontier.size() < N / BETA) {
+        dir = Direction::TOP_DOWN;
+      } else if (dir == Direction::TOP_DOWN && edges_frontier > unexplored_edges / ALPHA) {
+        dir = Direction::BOTTOM_UP;
+      }
+      unexplored_edges -= edges_frontier;
+      edges_frontier_old = edges_frontier;      
+      edges_frontier = 0;
       if (dir == Direction::TOP_DOWN) {
-        if (switch_to_bottom_up(this_frontier)) {
-          dir = Direction::BOTTOM_UP;
-          bottom_up_step(this_frontier, next_frontier, distance);
-        } else {
-          top_down_step(this_frontier, next_frontier, distance);
-        }
+        top_down_step(this_frontier, next_frontier, distance);
       } else {
-        if (dir == Direction::BOTTOM_UP) {
-          if (switch_to_top_down(this_frontier)) {
-          dir = Direction::TOP_DOWN;
-          top_down_step(this_frontier, next_frontier, distance);
-          } else {
-            bottom_up_step(this_frontier, next_frontier, distance);
-          }
-        }
+        bottom_up_step(this_frontier, next_frontier, distance);
       }
       distance++;
       this_frontier = std::move(next_frontier);
