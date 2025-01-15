@@ -183,62 +183,32 @@ public:
                               weight_type distance) {
     frontier[v] = true;
     visited[v] = true;
-    // edges_frontier += rowptr[v+1] - rowptr[v];
-    // vertices_frontier += 1;
-    // distances[v] = distance;
   }
 
   #pragma omp declare reduction(vec_add : std::vector<vidType> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
 
-  inline void bottom_up_for(vidType i, weight_type distance,
-                            weight_type *distances) {
-    for (vidType j = rowptr[i]; j < rowptr[i + 1]; j++) {
-      vidType neighbor = col[j];
-      if (this_frontier[neighbor] == true) {
-        // If neighbor is in frontier, add this vertex to next frontier
-        add_to_frontier(next_frontier, distances, i, distance);
-        break;
-      }
-    }
-  }
-
   void bottom_up_step(bool *this_frontier, bool *next_frontier,
                       weight_type distance, weight_type *distances) {
-    if (unvisited_vertices < N / 100) {
-      std::vector<vidType> to_visit;
-      #pragma omp parallel for reduction(vec_add : to_visit) schedule(auto)
-      for (vidType i = 0; i < N; i++) {
-        if (!is_visited(i)) {
-          to_visit.push_back(i);
-        }
-      }
-      #pragma omp parallel for reduction(+ : vertices_frontier) schedule(auto)
-      for (vidType i : to_visit) {
-        bottom_up_for(i, distance, distances);
-      }
-    } else {
-      #pragma omp parallel for reduction(+ : vertices_frontier) schedule(auto)
-      for (vidType i = 0; i < N; i++) {
-        if (is_visited(i)) {
-          continue;
-        }
-        bottom_up_for(i, distance, distances);
-      }
-    }
-
-    #pragma omp parallel for reduction(+ : edges_frontier, unvisited_vertices) schedule(auto)
+    std::cout << "Bottom up step\n";
+    #pragma omp parallel for schedule(auto)
     for (vidType i = 0; i < N; i++) {
-      if (next_frontier[i] == true) {
-        edges_frontier += rowptr[i + 1] - rowptr[i];
-        vertices_frontier += 1;
-        distances[i] = distance;
+      if (is_visited(i)) {
+        continue;
+      }
+      for (vidType j = rowptr[i]; j < rowptr[i + 1]; j++) {
+        vidType neighbor = col[j];
+        if (this_frontier[neighbor] == true) {
+          // If neighbor is in frontier, add this vertex to next frontier
+          add_to_frontier(next_frontier, distances, i, distance);
+          break;
+        }
       }
     }
   }
 
   void top_down_step(bool *this_frontier, bool *next_frontier,
                      weight_type distance, weight_type *distances) {
-    // std::cout << "Top down step\n";
+    std::cout << "Top down step\n";
     std::vector<vidType> to_visit;
     #pragma omp parallel for reduction(vec_add : to_visit) schedule(auto)
     for (int v = 0; v < N; v++) {
@@ -247,15 +217,12 @@ public:
       }
     }
 
-    #pragma omp parallel for reduction(+ : vertices_frontier, edges_frontier) schedule(auto)
+    #pragma omp parallel for schedule(auto)
     for (vidType v : to_visit) {
       for (vidType i = rowptr[v]; i < rowptr[v + 1]; i++) {
         vidType neighbor = col[i];
         if (!is_visited(neighbor)) {
           add_to_frontier(next_frontier, distances, neighbor, distance);
-          edges_frontier += rowptr[neighbor + 1] - rowptr[neighbor];
-          vertices_frontier += 1;
-          distances[neighbor] = distance;
         }
       }
     }
@@ -285,57 +252,65 @@ public:
       } else {
         bottom_up_step(this_frontier, next_frontier, distance, distances);
       }
+
+      #pragma omp parallel for reduction(+ : edges_frontier, vertices_frontier) schedule(auto)
+      for (vidType i = 0; i < N; i++) {
+        this_frontier[i] = false;
+        if (next_frontier[i] == true) {
+          edges_frontier += rowptr[i + 1] - rowptr[i];
+          vertices_frontier += 1;
+          distances[i] = distance;
+        }
+      }
       if (vertices_frontier == 0) {
         break;
       }
       std::swap(this_frontier, next_frontier);
-      #pragma omp parallel for
-      for (int i = 0; i < N; i++) {
-        next_frontier[i] = false;
-      }
       distance++;
     } while (true);
   }
 };
 } // namespace small_graph
 
-inline vidType get_degree(eidType *rowptr, vidType i) {
-  return rowptr[i + 1] - rowptr[i];
-}
+namespace complete {
+  inline vidType get_degree(eidType *rowptr, vidType i) {
+    return rowptr[i + 1] - rowptr[i];
+  }
 
-void merged_csr(eidType *rowptr, vidType *col, vidType *merged, uint64_t N,
-                uint64_t M) {
-  vidType merged_index = 0;
-  // Add degree of each vertex to the start of its neighbor list
-  for (vidType i = 0; i < N; i++) {
-    vidType start = rowptr[i];
-    merged[merged_index++] = get_degree(rowptr, i) | MARKED_MASK;
-    for (vidType j = start; j < rowptr[i + 1]; j++, merged_index++) {
-      merged[merged_index] = rowptr[col[j]] + col[j];
+  void merged_csr(eidType *rowptr, vidType *col, vidType *merged, uint64_t N,
+                  uint64_t M) {
+    vidType merged_index = 0;
+    // Add degree of each vertex to the start of its neighbor list
+    for (vidType i = 0; i < N; i++) {
+      vidType start = rowptr[i];
+      merged[merged_index++] = get_degree(rowptr, i) | MARKED_MASK;
+      for (vidType j = start; j < rowptr[i + 1]; j++, merged_index++) {
+        merged[merged_index] = rowptr[col[j]] + col[j];
+      }
     }
+    // Fix rowptr indices by adding offset caused by adding the degree to the
+    // start of each neighbor list
+    for (vidType i = 0; i <= N; i++) {
+      rowptr[i] = rowptr[i] + i;
+    }
+    merged[M + N] = MARKED_MASK;
   }
-  // Fix rowptr indices by adding offset caused by adding the degree to the
-  // start of each neighbor list
-  for (vidType i = 0; i <= N; i++) {
-    rowptr[i] = rowptr[i] + i;
-  }
-  merged[M + N] = MARKED_MASK;
-}
 
-BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
-                            uint64_t M) {
-  if ((float)M/N < 10) {
-    vidType *merged = new vidType[M + N + 1];
-    merged_csr(rowptr, col, merged, N, M);
-    return new large_graph::Graph(rowptr, col, merged, N, M);
-  } else {
-    bool *this_frontier = new bool[N];
-    bool *next_frontier = new bool[N];
-    bool *visited = new bool[N];
-    std::fill(this_frontier, this_frontier + N, false);
-    std::fill(next_frontier, next_frontier + N, false);
-    std::fill(visited, visited + N, false);
-    return new small_graph::Graph(rowptr, col, this_frontier, next_frontier,
-                                  visited, N, M);
+  BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
+                              uint64_t M) {
+    if ((float)M/N < 10) {
+      vidType *merged = new vidType[M + N + 1];
+      merged_csr(rowptr, col, merged, N, M);
+      return new large_graph::Graph(rowptr, col, merged, N, M);
+    } else {
+      bool *this_frontier = new bool[N];
+      bool *next_frontier = new bool[N];
+      bool *visited = new bool[N];
+      std::fill(this_frontier, this_frontier + N, false);
+      std::fill(next_frontier, next_frontier + N, false);
+      std::fill(visited, visited + N, false);
+      return new small_graph::Graph(rowptr, col, this_frontier, next_frontier,
+                                    visited, N, M);
+    }
   }
 }
