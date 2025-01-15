@@ -189,7 +189,7 @@ public:
 
   void bottom_up_step(bool *this_frontier, bool *next_frontier,
                       weight_type distance, weight_type *distances) {
-    std::cout << "Bottom up step\n";
+    // std::cout << "Bottom up step\n";
     #pragma omp parallel for schedule(auto)
     for (vidType i = 0; i < N; i++) {
       if (is_visited(i)) {
@@ -208,7 +208,7 @@ public:
 
   void top_down_step(bool *this_frontier, bool *next_frontier,
                      weight_type distance, weight_type *distances) {
-    std::cout << "Top down step\n";
+    // std::cout << "Top down step\n";
     std::vector<vidType> to_visit;
     #pragma omp parallel for reduction(vec_add : to_visit) schedule(auto)
     for (int v = 0; v < N; v++) {
