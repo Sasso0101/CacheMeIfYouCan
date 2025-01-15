@@ -209,20 +209,14 @@ public:
   void top_down_step(bool *this_frontier, bool *next_frontier,
                      weight_type distance, weight_type *distances) {
     // std::cout << "Top down step\n";
-    std::vector<vidType> to_visit;
-    #pragma omp parallel for reduction(vec_add : to_visit) schedule(auto)
+    #pragma omp parallel for schedule(auto)
     for (int v = 0; v < N; v++) {
       if (this_frontier[v] == true) {
-        to_visit.push_back(v);
-      }
-    }
-
-    #pragma omp parallel for schedule(auto)
-    for (vidType v : to_visit) {
-      for (vidType i = rowptr[v]; i < rowptr[v + 1]; i++) {
-        vidType neighbor = col[i];
-        if (!is_visited(neighbor)) {
-          add_to_frontier(next_frontier, distances, neighbor, distance);
+        for (vidType i = rowptr[v]; i < rowptr[v + 1]; i++) {
+          vidType neighbor = col[i];
+          if (!is_visited(neighbor)) {
+            add_to_frontier(next_frontier, distances, neighbor, distance);
+          }
         }
       }
     }
@@ -243,15 +237,15 @@ public:
                  edges_frontier > unexplored_edges / ALPHA) {
         dir = Direction::BOTTOM_UP;
       }
-      unexplored_edges -= edges_frontier;
-      unvisited_vertices -= vertices_frontier;
-      edges_frontier = 0;
-      vertices_frontier = 0;
       if (dir == Direction::TOP_DOWN) {
         top_down_step(this_frontier, next_frontier, distance, distances);
       } else {
         bottom_up_step(this_frontier, next_frontier, distance, distances);
       }
+      unexplored_edges -= edges_frontier;
+      unvisited_vertices -= vertices_frontier;
+      edges_frontier = 0;
+      vertices_frontier = 0;
 
       #pragma omp parallel for reduction(+ : edges_frontier, vertices_frontier) schedule(auto)
       for (vidType i = 0; i < N; i++) {
