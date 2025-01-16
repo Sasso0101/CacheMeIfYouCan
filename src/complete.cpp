@@ -80,7 +80,7 @@ public:
     reduction(+ : edges_frontier) schedule(auto)
     for (vidType i = 0; i < N; i++) {
       vidType start = rowptr[i];
-      if (IS_VISITED(start) || is_unconnected(start)) {
+      if (IS_VISITED(start)) {
         continue;
       }
       for (vidType j = start + 1; j < rowptr[i + 1]; j++) {
