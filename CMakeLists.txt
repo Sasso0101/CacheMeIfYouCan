@@ -5,10 +5,11 @@ project(BFS)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_COMPILER "clang++")
+#set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-Wall -O3 -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(LIKWID_DIR "/apps/likwid-4.3.4/lib")
 
 include_directories(include)
 
@@ -18,15 +19,16 @@ add_executable(BFS src/bfs.cpp src/benchmark.cpp src/bfs_cached.cpp src/bfs_hybr
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(BFS PRIVATE OpenMP::OpenMP_CXX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp=libomp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp") #=libomp
 endif()
 
-find_package(likwid)
+find_package(LIKWID)
 if(LIKWID_FOUND)
     message(STATUS "Found LIKWID: ${LIKWID_LIBRARIES}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -DLIKWID_PERFMON")
-    target_link_libraries(BFS PRIVATE likwid::likwid)
-    target_link_options(BFS PRIVATE -lm)
+    target_include_directories(BFS PRIVATE ${LIKWID_INCLUDES})
+    target_link_libraries(BFS PRIVATE likwid)
+    target_link_options(BFS PRIVATE -L${LIKWID_DIR})
 endif()
 
 # find_package(absl REQUIRED)

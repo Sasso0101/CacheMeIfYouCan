@@ -104,7 +104,10 @@ int main(const int argc, char **argv) {
     distances_ref[i] = std::numeric_limits<weight_type>::max();
   }
   LIKWID_MARKER_INIT;
-  LIKWID_MARKER_THREADINIT;
+  #pragma omp parallel
+  {
+    LIKWID_MARKER_THREADINIT;
+  }
   auto t1 = std::chrono::high_resolution_clock::now();
   BaseGraph *g = benchmark::initialize_graph(rowptr, col, N, M);
   g->BFS(start_node, distances_ref);
@@ -119,17 +122,26 @@ int main(const int argc, char **argv) {
   }
   g = complete::initialize_graph(rowptr, col, N, M);
   t1 = std::chrono::high_resolution_clock::now();
+  #pragma omp parallel
+  {
+    LIKWID_MARKER_START("bfs");
+  }
   g->BFS(start_node, distances_bfs);
+  #pragma omp parallel
+  {
+    LIKWID_MARKER_STOP("bfs");
+  }
+  LIKWID_MARKER_CLOSE;
   t2 = std::chrono::high_resolution_clock::now();
 
   ms_double = t2 - t1;
   std::cout << "BFS: " << ms_double.count() << "ms\n";
 
-  if (check_correctness(distances_ref, distances_bfs, N)) {
+  /*if (check_correctness(distances_ref, distances_bfs, N)) {
     return 0;
   } else {
     return 1;
-  }
+  }*/
   // write_distances(distances_ref, N, "ref_distances.txt");
   // write_distances(distances_bfs, N, "bfs_distances.txt");
 

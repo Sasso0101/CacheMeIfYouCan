@@ -1,6 +1,6 @@
 #pragma once
 #ifdef LIKWID_PERFMON
-#include <likwid-marker.h>
+#include <likwid.h>
 #else
 #define LIKWID_MARKER_INIT
 #define LIKWID_MARKER_THREADINIT
