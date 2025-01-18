@@ -2,7 +2,7 @@
 #include <vector>
 #include <profiling.hpp>
 
-namespace benchmark {
+namespace reference {
 
 class Graph : public BaseGraph {
   eidType *rowptr;

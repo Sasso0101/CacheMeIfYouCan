@@ -7,14 +7,14 @@ project(BFS)
 set(CMAKE_CXX_STANDARD 20)
 #set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -O3 -march=native")
+set(CMAKE_CXX_FLAGS "-O3 -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(LIKWID_DIR "/apps/likwid-4.3.4/lib")
 
 include_directories(include)
 
 # Add sources
-add_executable(BFS src/bfs.cpp src/benchmark.cpp src/bfs_cached.cpp src/bfs_hybrid_bitmap.cpp src/complete.cpp src/main.cpp)
+add_executable(BFS src/bfs.cpp src/reference.cpp src/bfs_cached.cpp src/bfs_hybrid_bitmap.cpp src/complete.cpp src/main_speedcode.cpp)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
@@ -30,6 +30,13 @@ if(LIKWID_FOUND)
     target_link_libraries(BFS PRIVATE likwid)
     target_link_options(BFS PRIVATE -L${LIKWID_DIR})
 endif()
+
+include(FetchContent)
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
+target_link_libraries(BFS PRIVATE nlohmann_json::nlohmann_json)
 
 # find_package(absl REQUIRED)
 # target_link_libraries(BFS PRIVATE absl::flat_hash_map)
@@ -67,6 +74,11 @@ foreach(dataset ${DATASETS})
 endforeach()
 
 # Datasets
+add_custom_target(speedcode
+    COMMAND BFS
+    DEPENDS BFS
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
 add_custom_target(test
     COMMAND BFS datasets/test.txt 16 32 $ENV{SOURCE}
     DEPENDS BFS
