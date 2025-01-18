@@ -1,12 +1,6 @@
 .DS_Store
-*.out
 build/
-.cache/
 output/
 datasets/
-**/*_distances.txt
-cmake-build-debug/
-cmake-build-release/
-.idea/
-*.txt
-scripts/data/*
+.vscode/
+.cache/

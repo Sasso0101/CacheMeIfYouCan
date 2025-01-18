@@ -14,7 +14,7 @@
 cd /home/salvatore.andaloro/Speedcode
 
 # Define the datasets directory
-SCHEMA_DIR="./schema"
+SCHEMA_DIR="./schemas"
 
 # Define the programs to run
 PROGRAMS=("merged" "nomerged")

@@ -5,7 +5,7 @@
 #include <complete_nomerged.hpp>
 
 int main(const int argc, char **argv) {
-  std::ifstream in("schema/" + std::string(argv[1]) + ".json");
+  std::ifstream in("schemas/" + std::string(argv[1]) + ".json");
   nlohmann::json j;
   in >> j;
   quicktype::Inputschema data;
