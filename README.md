@@ -2,6 +2,7 @@
 To build the project, you need cmake (>=3.10) and gcc9.1.0. Clone the repository and run the following commands in the project's root directory:
 ```bash
 cmake -B build
+cd build
 make BFS
 ```
 
@@ -33,5 +34,5 @@ The project is already set up to use the [LIKWID](https://github.com/RRZE-HPC/li
 For example, to view the `CYCLE_ACTIVITY` statistics (measures cycles spent waiting for data from the cache and memory hierarchy), run the following command:
 ```bash
 cd build
-likwid-perfctr -C 0 -g CYCLE_ACTIVITY -m ./BFS Collaboration_Network merged
+likwid-perfctr -C 0 -g CYCLE_ACTIVITY -m ./BFS Collaboration_Network_1 merged
 ```
