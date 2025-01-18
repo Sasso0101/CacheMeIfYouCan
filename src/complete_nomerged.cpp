@@ -17,18 +17,20 @@ class Graph : public BaseGraph {
   [[maybe_unused]] vidType *col;
   uint32_t unexplored_edges;
   Direction dir;
+  bool* visited;
   [[maybe_unused]] uint64_t N;
   [[maybe_unused]] uint64_t M;
   uint32_t edges_frontier, edges_frontier_old;
 
 public:
-  Graph(eidType *rowptr, vidType *col, uint64_t N, uint64_t M)
-      : rowptr(rowptr), col(col), N(N), M(M) {
+  Graph(eidType *rowptr, vidType *col, bool* visited, uint64_t N, uint64_t M)
+      : rowptr(rowptr), col(col), visited(visited), N(N), M(M) {
     unexplored_edges = M;
   }
   ~Graph() {}
   inline void set_distance(vidType i, weight_type distance, weight_type *distances) {
     distances[i] = distance;
+    visited[i] = true;
   }
 
   void print_frontier(frontier &frontier) {
@@ -51,13 +53,15 @@ public:
     #pragma omp parallel for reduction(vec_add : next_frontier)                    \
     reduction(+ : edges_frontier) schedule(auto)
     for (vidType i = 0; i < N; i++) {
-      if (distances[i] <= distance) {
+      if (visited[i]) {
         continue;
       }
       for (vidType j = rowptr[i]; j < rowptr[i + 1]; j++) {
-        if (distances[col[j]] == distance - 1) {
+        if (visited[col[j]] && distances[col[j]] == distance - 1) {
           // If neighbor is in frontier, add this vertex to next frontier
-          add_to_frontier(next_frontier, i);
+          if (rowptr[i + 1] - rowptr[i] > 1) {
+            add_to_frontier(next_frontier, i);
+          }
           set_distance(i, distance, distances);
           break;
         }
@@ -72,8 +76,10 @@ public:
     for (const auto &v : this_frontier) {
       for (vidType i = rowptr[v]; i < rowptr[v+1]; i++) {
         vidType neighbor = col[i];
-        if (distances[neighbor] > distance) {
-          add_to_frontier(next_frontier, neighbor);
+        if (!visited[neighbor]) {
+          if (rowptr[neighbor + 1] - rowptr[neighbor] > 1) {
+            add_to_frontier(next_frontier, neighbor);
+          }
           set_distance(neighbor, distance, distances);
         }
       }
@@ -243,7 +249,11 @@ namespace complete {
   BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
                               uint64_t M) {
     if ((float)M/N < 10) {
-      return new large_graph::Graph(rowptr, col, N, M);
+      bool* visited = new bool[N];
+      for (vidType i = 0; i < N; i++) {
+        visited[i] = false;
+      }
+      return new large_graph::Graph(rowptr, col, visited, N, M);
     } else {
       bool *this_frontier = new bool[N];
       bool *next_frontier = new bool[N];
