@@ -1,9 +1,9 @@
 #include "inputschema.cpp"
 #include <cassert>
-#include <complete.hpp>
 #include <cstdint>
 #include <fstream>
 #include <graph.hpp>
+#include <iostream>
 #include <optional>
 #include <random>
 #include <reference.hpp>

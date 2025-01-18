@@ -1,15 +1,15 @@
-#include <cstdint>
 #include <graph.hpp>
 #include <iostream>
 #include <omp.h>
-#include <profiling.hpp>
 #include <vector>
 
-constexpr int ALPHA = 3;
-constexpr int BETA = 12;
+constexpr int ALPHA = 4;
+constexpr int BETA = 24;
 
 enum class Direction { TOP_DOWN, BOTTOM_UP };
 typedef std::vector<vidType> frontier;
+
+namespace nomerged {
 
 namespace large_graph {
 class Graph : public BaseGraph {
@@ -124,10 +124,10 @@ namespace small_graph {
 class Graph : public BaseGraph {
   eidType *rowptr;
   [[maybe_unused]] vidType *col;
-  uint32_t unexplored_edges, edges_frontier, vertices_frontier,
-      unvisited_vertices;
+  uint32_t unexplored_edges, unvisited_vertices;
   Direction dir;
   bool *this_frontier, *next_frontier, *visited;
+  std::vector<vidType> to_visit;
   [[maybe_unused]] uint64_t N;
   [[maybe_unused]] uint64_t M;
 
@@ -185,24 +185,33 @@ public:
   void top_down_step(bool *this_frontier, bool *next_frontier,
                      weight_type distance, weight_type *distances) {
     // std::cout << "Top down step\n";
+    /*std::vector<vidType> to_visit;
+    #pragma omp parallel for reduction(vec_add : to_visit) schedule(auto)
+    for (int v = 0; v < N; v++) {
+      if (this_frontier[v] == true) {
+        to_visit.push_back(v);
+      }
+    }*/
+
     #pragma omp parallel for schedule(auto)
     for (int v = 0; v < N; v++) {
       if (this_frontier[v] == true) {
-        for (vidType i = rowptr[v]; i < rowptr[v + 1]; i++) {
-          vidType neighbor = col[i];
-          if (!is_visited(neighbor)) {
-            add_to_frontier(next_frontier, distances, neighbor, distance);
-          }
+    //for (vidType v : to_visit) {
+      for (vidType i = rowptr[v]; i < rowptr[v + 1]; i++) {
+        vidType neighbor = col[i];
+        if (!is_visited(neighbor)) {
+          add_to_frontier(next_frontier, distances, neighbor, distance);
         }
       }
+    }
     }
   }
 
   void BFS(vidType source, weight_type *distances) {
     dir = Direction::TOP_DOWN;
     add_to_frontier(this_frontier, distances, source, 0);
-    edges_frontier = rowptr[source + 1] - rowptr[source];
-    vertices_frontier = 1;
+    vidType edges_frontier = rowptr[source + 1] - rowptr[source];
+    vidType vertices_frontier = 1;
     distances[source] = 0;
     weight_type distance = 1;
 
@@ -213,15 +222,15 @@ public:
                  edges_frontier > unexplored_edges / ALPHA) {
         dir = Direction::BOTTOM_UP;
       }
+      unexplored_edges -= edges_frontier;
+      unvisited_vertices -= vertices_frontier;
+      edges_frontier = 0;
+      vertices_frontier = 0;
       if (dir == Direction::TOP_DOWN) {
         top_down_step(this_frontier, next_frontier, distance, distances);
       } else {
         bottom_up_step(this_frontier, next_frontier, distance, distances);
       }
-      unexplored_edges -= edges_frontier;
-      unvisited_vertices -= vertices_frontier;
-      edges_frontier = 0;
-      vertices_frontier = 0;
 
       #pragma omp parallel for reduction(+ : edges_frontier, vertices_frontier) schedule(auto)
       for (vidType i = 0; i < N; i++) {
@@ -242,7 +251,6 @@ public:
 };
 } // namespace small_graph
 
-namespace nomerged {
   inline vidType get_degree(eidType *rowptr, vidType i) {
     return rowptr[i + 1] - rowptr[i];
   }

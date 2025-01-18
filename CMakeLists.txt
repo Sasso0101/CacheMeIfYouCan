@@ -5,7 +5,7 @@ project(BFS)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 20)
-#set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_CXX_COMPILER "/apps/gcc-9.1.0/local/bin/g++-9.1.0")
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-O3 -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
@@ -14,7 +14,7 @@ set(LIKWID_DIR "/apps/likwid-4.3.4/lib")
 include_directories(include)
 
 # Add sources
-add_executable(BFS src/complete.cpp src/complete_nomerged.cpp src/main.cpp)
+add_executable(BFS src/complete.cpp src/complete_nomerged.cpp src/reference.cpp src/main.cpp)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)

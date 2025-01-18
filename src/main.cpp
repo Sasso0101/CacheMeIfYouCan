@@ -1,6 +1,7 @@
 #include "input.hpp"
-#include <complete.hpp>
+#include <omp.h>
 #include <profiling.hpp>
+#include <complete.hpp>
 #include <complete_nomerged.hpp>
 
 int main(const int argc, char **argv) {
@@ -20,6 +21,11 @@ int main(const int argc, char **argv) {
   LIKWID_MARKER_INIT;
   #pragma omp parallel
   {
+    int num_threads = omp_get_num_threads();
+    int thread_id = omp_get_thread_num();
+    if (thread_id == 0) {
+        printf("Number of threads: %d\n", num_threads);
+    }
     LIKWID_MARKER_THREADINIT;
   }
   #pragma omp parallel
