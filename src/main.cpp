@@ -4,10 +4,8 @@
 #include <bfs.hpp>
 #include <bfs_cached.hpp>
 #include <bfs_hybrid_bitmap.hpp>
-#include <test_openmp.hpp>
 #include <complete.hpp>
 #include <chrono>
-#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -137,11 +135,11 @@ int main(const int argc, char **argv) {
   ms_double = t2 - t1;
   std::cout << "BFS: " << ms_double.count() << "ms\n";
 
-  /*if (check_correctness(distances_ref, distances_bfs, N)) {
+  if (check_correctness(distances_ref, distances_bfs, N)) {
     return 0;
   } else {
     return 1;
-  }*/
+  }
   // write_distances(distances_ref, N, "ref_distances.txt");
   // write_distances(distances_bfs, N, "bfs_distances.txt");
 
