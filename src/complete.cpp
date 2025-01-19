@@ -18,6 +18,10 @@ typedef std::vector<vidType> frontier;
 #define IS_MARKED(i) (((merged[i]) & MARKED_MASK) != 0)
 
 namespace complete {
+
+#define IS_VISITED(i) (((merged[i]) & VISITED_MASK) != 0)
+#define IS_MARKED(i) (((merged[i]) & MARKED_MASK) != 0)
+
 namespace very_large_graph {
 class Graph : public BaseGraph {
   eidType *rowptr;
@@ -76,7 +80,7 @@ public:
   void bottom_up_step(frontier this_frontier, frontier &next_frontier,
                       weight_type distance, vidType &edges_frontier) {
     #pragma omp parallel for reduction(vec_add : next_frontier)                    \
-    reduction(+ : edges_frontier) schedule(auto)
+    reduction(+ : edges_frontier) schedule(static)
     for (vidType i = 0; i < N; i++) {
       vidType start = rowptr[i];
       if (IS_VISITED(start)) {
@@ -98,7 +102,7 @@ public:
   void top_down_step(frontier this_frontier, frontier &next_frontier,
                      weight_type &distance, vidType &edges_frontier) {
     #pragma omp parallel for reduction(vec_add : next_frontier)                    \
-    reduction(+ : edges_frontier) schedule(auto) if (edges_frontier_old > 150)
+    reduction(+ : edges_frontier) schedule(static) if (edges_frontier_old > 150)
     for (const auto &v : this_frontier) {
       for (vidType i = v + 1; !IS_MARKED(i); i++) {
         vidType neighbor = merged[i];
@@ -194,17 +198,16 @@ public:
   void bottom_up_step(bool *this_frontier, bool *next_frontier,
                       weight_type distance, weight_type *distances) {
     // std::cout << "Bottom up step\n";
-    #pragma omp parallel for schedule(auto)
+    #pragma omp parallel for schedule(guided, 512)
     for (vidType i = 0; i < N; i++) {
-      if (is_visited(i)) {
-        continue;
-      }
-      for (vidType j = rowptr[i]; j < rowptr[i + 1]; j++) {
-        vidType neighbor = col[j];
-        if (this_frontier[neighbor] == true) {
-          // If neighbor is in frontier, add this vertex to next frontier
-          add_to_frontier(next_frontier, distances, i, distance);
-          break;
+      if (!is_visited(i)) {
+        for (vidType j = rowptr[i]; j < rowptr[i + 1]; j++) {
+            vidType neighbor = col[j];
+            if (this_frontier[neighbor] == true) {
+            // If neighbor is in frontier, add this vertex to next frontier
+            add_to_frontier(next_frontier, distances, i, distance);
+            break;
+            }
         }
       }
     }
@@ -221,7 +224,7 @@ public:
       }
     }*/
 
-    #pragma omp parallel for schedule(auto)
+    #pragma omp parallel for schedule(guided, 512)
     for (int v = 0; v < N; v++) {
       if (this_frontier[v] == true) {
     //for (vidType v : to_visit) {
@@ -260,7 +263,7 @@ public:
         bottom_up_step(this_frontier, next_frontier, distance, distances);
       }
 
-      #pragma omp parallel for reduction(+ : edges_frontier, vertices_frontier) schedule(auto)
+      #pragma omp parallel for reduction(+ : edges_frontier, vertices_frontier) schedule(static)
       for (vidType i = 0; i < N; i++) {
         this_frontier[i] = false;
         if (next_frontier[i] == true) {
@@ -320,19 +323,18 @@ public:
   void bottom_up_step(frontier this_frontier, frontier &next_frontier,
                       weight_type distance, weight_type *distances, vidType &edges_frontier) {
     #pragma omp parallel for reduction(vec_add : next_frontier)                    \
-    reduction(+ : edges_frontier) schedule(auto)
+    reduction(+ : edges_frontier) schedule(static)
     for (vidType i = 0; i < N; i++) {
-      if (visited[i]) {
-        continue;
-      }
-      for (vidType j = rowptr[i]; j < rowptr[i + 1]; j++) {
-        if (visited[col[j]] && distances[col[j]] == distance - 1) {
-          // If neighbor is in frontier, add this vertex to next frontier
-          if (rowptr[i + 1] - rowptr[i] > 1) {
-            add_to_frontier(next_frontier, i, edges_frontier);
-          }
-          set_distance(i, distance, distances);
-          break;
+      if (!visited[i]) {
+        for (vidType j = rowptr[i]; j < rowptr[i + 1]; j++) {
+            if (visited[col[j]] && distances[col[j]] == distance - 1) {
+            // If neighbor is in frontier, add this vertex to next frontier
+            if (rowptr[i + 1] - rowptr[i] > 1) {
+                add_to_frontier(next_frontier, i, edges_frontier);
+            }
+            set_distance(i, distance, distances);
+            break;
+            }
         }
       }
     }
@@ -341,7 +343,7 @@ public:
   void top_down_step(frontier this_frontier, frontier &next_frontier,
                      weight_type &distance, weight_type *distances, vidType &edges_frontier) {
     #pragma omp parallel for reduction(vec_add : next_frontier)                    \
-    reduction(+ : edges_frontier) schedule(auto) if (edges_frontier_old > 150)
+    reduction(+ : edges_frontier) schedule(static) if (edges_frontier_old > 150)
     for (const auto &v : this_frontier) {
       for (vidType i = rowptr[v]; i < rowptr[v+1]; i++) {
         vidType neighbor = col[i];
