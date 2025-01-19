@@ -2,7 +2,6 @@
 #include <omp.h>
 #include <profiling.hpp>
 #include <complete.hpp>
-#include <complete_nomerged.hpp>
 
 int main(const int argc, char **argv) {
   std::ifstream in("schemas/" + std::string(argv[1]) + ".json");
@@ -10,14 +9,7 @@ int main(const int argc, char **argv) {
   in >> j;
   quicktype::Inputschema data;
   quicktype::from_json(j, data);
-  std::string code_version = std::string(argv[2]);
-  BaseGraph *(*init)(eidType *rowptr, vidType *col, uint64_t N, uint64_t M);
-  if (code_version == "nomerged") {
-    init = nomerged::initialize_graph;
-  } else {
-    init = complete::initialize_graph;
-  }
-  ProblemInput p = ProblemInput(data, init);
+  ProblemInput p = ProblemInput(data, complete::initialize_graph);
   LIKWID_MARKER_INIT;
   #pragma omp parallel
   {

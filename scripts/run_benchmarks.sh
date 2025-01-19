@@ -17,7 +17,7 @@ cd /home/salvatore.andaloro/Speedcode
 SCHEMA_DIR="./schemas"
 
 # Define the programs to run
-PROGRAMS=("merged" "nomerged")
+PROGRAMS=("merged")
 
 # Define the profiling groups
 LIKWID_GROUPS=("L2" "DATA" "L2CACHE" "TLB_DATA" "CYCLE_ACTIVITY" )
