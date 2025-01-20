@@ -1,6 +1,9 @@
 #include <graph.hpp>
 #include <vector>
 #include <profiling.hpp>
+#ifdef DBG_FRONTIER_SIZE
+#include <cstdio>
+#endif
 
 namespace reference {
 
@@ -21,10 +24,16 @@ public:
   }
 
   void BFS(vidType source, weight_type *distances) {
+    #ifdef DBG_FRONTIER_SIZE
+      std::vector<vidType> frontier_sizes;
+    #endif
     std::vector<vidType> this_frontier;
     distances[source] = 0;
     this_frontier.push_back(source);
     while (!this_frontier.empty()) {
+      #ifdef DBG_FRONTIER_SIZE
+        frontier_sizes.push_back(this_frontier.size());
+      #endif
       std::vector<vidType> next_frontier;
       for (const auto &src : this_frontier) {
         for (uint64_t i = rowptr[src]; i < rowptr[src + 1]; i++) {
@@ -37,6 +46,13 @@ public:
       }
       std::swap(this_frontier, next_frontier);
     }
+    #ifdef DBG_FRONTIER_SIZE
+      printf("Frontier sizes: ");
+      for (const vidType &size : frontier_sizes) {
+        printf("%d ", size);
+      }
+      printf("\n");
+    #endif
   }
 };
 

@@ -5,4 +5,4 @@ datasets/
 .vscode/
 .cache/
 *.out
-scripts/data/*
+scripts/data*/
