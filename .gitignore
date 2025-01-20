@@ -4,3 +4,5 @@ output/
 datasets/
 .vscode/
 .cache/
+*.out
+scripts/data/*

@@ -36,3 +36,13 @@ For example, to view the `CYCLE_ACTIVITY` statistics (measures cycles spent wait
 cd build
 likwid-perfctr -C 0 -g CYCLE_ACTIVITY -m ./BFS Collaboration_Network_1 merged
 ```
+
+
+## Python env setup
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install numpy matplotlib itables pandas
+```
+
