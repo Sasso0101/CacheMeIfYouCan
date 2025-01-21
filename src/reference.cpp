@@ -1,6 +1,7 @@
 #include <graph.hpp>
 #include <vector>
 #include <profiling.hpp>
+#include <string>
 #ifdef DBG_FRONTIER_SIZE
 #include <cstdio>
 #endif
@@ -56,8 +57,7 @@ public:
   }
 };
 
-BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
-                            uint64_t M) {
+BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N, uint64_t M, std::string algorithm) {
   return new Graph(rowptr, col, N, M);
 }
 

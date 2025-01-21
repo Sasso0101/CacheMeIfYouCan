@@ -9,7 +9,7 @@ int main(const int argc, char **argv) {
   in >> j;
   quicktype::Inputschema data;
   quicktype::from_json(j, data);
-  ProblemInput p = ProblemInput(data, reference::initialize_graph);
+  ProblemInput p = ProblemInput(data, reference::initialize_graph, std::string(""));
   LIKWID_MARKER_INIT;
   #pragma omp parallel
   {

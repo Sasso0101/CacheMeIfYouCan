@@ -3,13 +3,21 @@
 #include <profiling.hpp>
 #include <complete.hpp>
 
+#define USAGE "Usage: %s <schema> [small|large|very_large]\nThe second argument forces the usage of a specific algorithm. By default this is choosen dynamically.\n"
+
 int main(const int argc, char **argv) {
+  if (argc < 2 || argc > 3) {
+    printf(USAGE, argv[0]);
+    return 1;
+  }
+  std::string algorithm = (argc == 3) ? argv[2] : "default";
+
   std::ifstream in("schemas/" + std::string(argv[1]) + ".json");
   nlohmann::json j;
   in >> j;
   quicktype::Inputschema data;
   quicktype::from_json(j, data);
-  ProblemInput p = ProblemInput(data, complete::initialize_graph);
+  ProblemInput p = ProblemInput(data, complete::initialize_graph, algorithm);
   LIKWID_MARKER_INIT;
   #pragma omp parallel
   {

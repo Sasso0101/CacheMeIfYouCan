@@ -77,7 +77,8 @@ public:
 
   ProblemInput(quicktype::Inputschema &_input,
                BaseGraph *init(eidType *rowptr, vidType *col, uint64_t N,
-                               uint64_t M)) {
+                               uint64_t M, std::string algorithm),
+               std::string algorithm) {
     this->input = _input;
     if (_input.graph.data_file_format.has_value()) { // filename.has_value()) {
       assert(_input.graph.filename.has_value() &&
@@ -107,7 +108,7 @@ public:
       }
     }
 
-    graph = init(rowptr, col, N, M);
+    graph = init(rowptr, col, N, M, algorithm);
     if (_input.sources.has_value()) {
       for (int i = 0; i < _input.sources.value().size(); i++) {
         queries.push_back(_input.sources.value()[i]);
@@ -231,8 +232,7 @@ public:
     release_memory_postrun();
     auto reference_distances = distances;
     {
-      ProblemInput ref =
-          ProblemInput(input, reference::initialize_graph);
+      ProblemInput ref = ProblemInput(input, reference::initialize_graph, std::string(""));
       ref.run();
       reference_distances = ref.distances;
     }
