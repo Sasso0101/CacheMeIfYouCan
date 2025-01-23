@@ -46,3 +46,6 @@ source .venv/bin/activate
 pip install numpy matplotlib itables pandas
 ```
 
+```bash
+cmake -DDBG_FRONTIER_SIZE=OFF -DDBG_THREAD_BALANCE=ON ..
+```
