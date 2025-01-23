@@ -18,9 +18,9 @@ trap terminate_script SIGINT SIGTERM
 # TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 NUM_RUNS=$1
-EXECUTABLE=$2
-TIMEOUT=$3
-LOG_FILE=$4 # "output_${TIMESTAMP}.log"
+TIMEOUT=$2
+LOG_FILE="$3.log" # "output_${TIMESTAMP}.log"
+EXECUTABLE=$4
 DATASET_DIR="schemas"
 
 # Clear the log file
@@ -39,7 +39,7 @@ do
         echo "Running $EXECUTABLE on $dataset_name with arguments $EXECUTABLE_ARGS (Run $i/$NUM_RUNS)" >> $LOG_FILE
         echo "Command: $EXECUTABLE $dataset_name $EXECUTABLE_ARGS"
         
-        timeout $TIMEOUT $EXECUTABLE "$dataset_name" $EXECUTABLE_ARGS >> $LOG_FILE 2>&1
+        timeout "$TIMEOUT" "$EXECUTABLE" "$dataset_name" "$EXECUTABLE_ARGS" >> $LOG_FILE 2>&1
         if [ $? -eq 124 ]; then
             echo "TIMEOUT"
             echo "TIMEOUT" >> $LOG_FILE
