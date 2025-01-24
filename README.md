@@ -43,7 +43,7 @@ likwid-perfctr -C 0 -g CYCLE_ACTIVITY -m ./BFS Collaboration_Network_1 merged
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install numpy matplotlib itables pandas
+pip install numpy matplotlib itables pandas scipy
 ```
 
 ## CMake flags
