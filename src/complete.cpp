@@ -36,7 +36,7 @@ enum class Direction { TOP_DOWN, BOTTOM_UP };
 using frontier = std::vector<mergedType>;
 
 #define IS_VISITED(i) (((merged[i]) & VISITED_MASK) != 0)
-
+namespace complete {
 namespace large_graph {
 class Graph final : public BaseGraph {
   eidType *rowptr;
@@ -221,14 +221,12 @@ public:
 
   void BFS(vidType source, weight_type *distances) {
     frontier this_frontier;
-    vidType start = rowptr[source];
     dir = Direction::TOP_DOWN;
     vidType edges_frontier = 0;
-    add_to_frontier(this_frontier, start, edges_frontier);
-    set_distance(start, 0, distances);
+    add_to_frontier(this_frontier, source, edges_frontier);
+    set_distance(source, 0, distances);
     weight_type distance = 1;
     while (!this_frontier.empty()) {
-      // print_frontier(this_frontier);
       // std::cout << "Edges in frontier " << edges_frontier << ", vertices in frontier " << this_frontier.size() << ", unexplored edges " << unexplored_edges << std::endl;
       frontier next_frontier;
       next_frontier.reserve(this_frontier.size());
@@ -411,4 +409,6 @@ BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
     }
     return new classic::Graph(rowptr, col, visited, N, M);
   }
+}
+
 }
