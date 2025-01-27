@@ -26,7 +26,7 @@ public:
   void construct_from_coo(std::vector<int64_t> &input_row,
                           std::vector<int64_t> &input_col) {
     // convert COO form to CSR format.
-    N = input_row[0] + 1;
+    N = input_row[0];
     for (int64_t i = input_row.size(); --i >= 0;) {
       if (input_row[i] + 1 > N) {
         N = input_row[i] + 1;
