@@ -13,14 +13,6 @@ typedef uint32_t vidType;
 typedef uint64_t eidType;
 typedef uint32_t weight_type;
 
-enum class Direction { TOP_DOWN, BOTTOM_UP };
-typedef std::vector<vidType> frontier;
-
-typedef struct {
-  vidType parent;
-  vidType node;
-} pruned;
-
 class BaseGraph {
 public:
   #ifdef DBG_THREAD_BALANCE
