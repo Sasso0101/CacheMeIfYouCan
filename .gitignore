@@ -6,3 +6,4 @@ datasets/
 .cache/
 *.out
 scripts/data*/
+*.sh

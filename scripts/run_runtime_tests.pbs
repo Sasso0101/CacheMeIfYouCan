@@ -2,12 +2,12 @@
 # Job name
 #PBS -N BFS
 # Output files
-#PBS -o ./stdout.o
-#PBS -e ./stderr.e
+#PBS -o ./stdout_runtime_tests.o
+#PBS -e ./stderr_runtime_tests.e
 # Queue name
 #PBS -q short_cpuQ
 # Set the maximum wall time
-#PBS -l walltime=02:00:00
+#PBS -l walltime=06:00:00
 # Number of nodes, cores and memory
 #PBS -l select=1:ncpus=96:mem=100gb
 #PBS -l place=exclhost

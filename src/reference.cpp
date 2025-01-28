@@ -27,7 +27,8 @@ public:
   void BFS(vidType source, weight_type *distances) {
     #ifdef DBG_FRONTIER_SIZE
       std::vector<vidType> frontier_sizes;
-      std::vector<vidType> frontier_max_deg_diff;
+      std::vector<eidType> frontier_deg;
+      std::vector<eidType> frontier_max_deg_diff;
       eidType frontier_max_deg;
       eidType frontier_min_deg;
     #endif
@@ -37,6 +38,7 @@ public:
     while (!this_frontier.empty()) {
       #ifdef DBG_FRONTIER_SIZE
         frontier_sizes.push_back(this_frontier.size());
+        frontier_deg.push_back(0);
         frontier_max_deg = 0;
         frontier_min_deg = std::numeric_limits<eidType>::max();
       #endif
@@ -44,6 +46,7 @@ public:
       for (const auto &src : this_frontier) {
         #ifdef DBG_FRONTIER_SIZE
           eidType deg = rowptr[src + 1] - rowptr[src];
+          frontier_deg.back() += deg;
           if (deg > frontier_max_deg) frontier_max_deg = deg;
           if (deg < frontier_min_deg) frontier_min_deg = deg;
         #endif
@@ -64,6 +67,11 @@ public:
       printf("Frontier sizes: ");
       for (const vidType &size : frontier_sizes) {
         printf("%u ", size);
+      }
+      printf("\n");
+      printf("Frontier edges: ");
+      for (const vidType &deg : frontier_deg) {
+        printf("%lu ", deg);
       }
       printf("\n");
       printf("Frontier max deg diff: ");
