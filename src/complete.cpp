@@ -383,11 +383,11 @@ BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
   bool is_small = algorithm == "small";
   bool is_classic = algorithm == "classic";
 
-  if ((float)M/N < 10 || is_large) {
+  if (((float)M/N < 10 && !is_small && !is_classic) || is_large) {
     mergedType *merged = new mergedType[M + 2*N];
     merged_csr(rowptr, col, merged, N, M);
     return new large_graph::Graph(rowptr, col, merged, N, M);
-  } else if (is_small || !is_classic) {
+  } else if ((is_small && !is_classic && !is_large) || (!is_small && !is_large && !is_classic)) {
     bool *this_frontier = new bool[N];
     mergedType *newrowptr = new mergedType[N+1];
     bool *next_frontier = new bool[N];
