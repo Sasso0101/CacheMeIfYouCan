@@ -387,7 +387,7 @@ BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
     mergedType *merged = new mergedType[M + 2*N];
     merged_csr(rowptr, col, merged, N, M);
     return new large_graph::Graph(rowptr, col, merged, N, M);
-  } else if ((is_small && !is_classic && !is_large) || (!is_small && !is_large && !is_classic)) {
+  } else if (!is_classic && !is_large) {
     bool *this_frontier = new bool[N];
     mergedType *newrowptr = new mergedType[N+1];
     bool *next_frontier = new bool[N];
