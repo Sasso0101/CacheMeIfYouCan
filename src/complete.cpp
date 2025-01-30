@@ -3,6 +3,7 @@
 #include <omp.h>
 #include <vector>
 #include <iostream>
+#include <limits>
 
 /*
   NOTE FOR REVIEWERS:
@@ -365,7 +366,7 @@ void merged_csr(eidType *rowptr, vidType *col, mergedType *merged, uint64_t N,
   for (vidType i = 0; i < N; i++) {
     vidType start = rowptr[i];
     merged[merged_index++] = get_degree(rowptr, i);
-    merged[merged_index++] = std::numeric_limits<weight_type>::max();
+    merged[merged_index++] = std::numeric_limits<mergedType>::max();
     for (vidType j = start; j < rowptr[i + 1]; j++, merged_index++) {
       merged[merged_index] = rowptr[col[j]] + 2*col[j];
     }
