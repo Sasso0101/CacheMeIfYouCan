@@ -8,6 +8,10 @@
 #include <random>
 #include <reference.hpp>
 #include <string>
+#include <complete.hpp>
+#include <parents.hpp>
+
+enum class Problem { Distances, Parents };
 
 class ProblemInput {
   quicktype::Inputschema input;
@@ -15,10 +19,8 @@ class ProblemInput {
   uint64_t M;
   eidType *rowptr;
   vidType *col;
-  // weight_type* weights;
-
-  std::vector<vidType> queries;
-  std::vector<std::vector<weight_type>> distances;
+  Problem problem;
+  std::vector<weight_type> output;
   BaseGraph *graph;
 
 public:
@@ -35,22 +37,23 @@ public:
     M = input_col.size();
     assert(input_col.size() == input_row.size() &&
            "In COO format col and row must have the same lengths");
-    // assert(input_col.size() == input_weight.size() && "In COO format col,
-    // row, weights must have the same lengths");
     rowptr = new eidType[N + 1]();
     col = new vidType[M]();
-    // weights = new weight_type[M]();
 
     for (size_t i = 0; i < input_row.size(); i++) {
       vidType src = input_row[i];
-      // printf("%d\n", src);
       vidType dst = input_col[i];
       col[i] = dst;
-      rowptr[src + 1] += 1;
-      // weights[i] = input_weight[i];
+      rowptr[src + 1] = i+1;
     }
-    for (size_t i = 1; i < N + 1; i++) {
-      rowptr[i] += rowptr[i - 1];
+
+    std::cout << "N: " << N << " M: " << M << std::endl;
+    for (int64_t i = 0; i < N; i++) {
+      std::cout << rowptr[i] << " ";
+      for (int64_t j = rowptr[i]; j < rowptr[i + 1]; j++) {
+        std::cout << col[j] << " ";
+      }
+      std::cout << std::endl;
     }
   }
 
@@ -75,10 +78,7 @@ public:
     // printf("Successfully deserialized the data. %llu, %llu\n", N, M);
   }
 
-  ProblemInput(quicktype::Inputschema &_input,
-               BaseGraph *init(eidType *rowptr, vidType *col, uint64_t N,
-                               uint64_t M, std::string algorithm),
-               std::string algorithm) {
+  ProblemInput(quicktype::Inputschema &_input, std::string algorithm, std::string _problem = "distances") {
     this->input = _input;
     if (_input.graph.data_file_format.has_value()) { // filename.has_value()) {
       assert(_input.graph.filename.has_value() &&
@@ -108,17 +108,16 @@ public:
       }
     }
 
-    graph = init(rowptr, col, N, M, algorithm);
-    if (_input.sources.has_value()) {
-      for (int i = 0; i < _input.sources.value().size(); i++) {
-        queries.push_back(_input.sources.value()[i]);
-        distances.emplace_back(N, std::numeric_limits<weight_type>::max());
-      }
+    if (_problem == "distances") {
+      this->problem = Problem::Distances;
+      graph = complete::initialize_graph(rowptr, col, N, M, algorithm);
+      output = std::vector<vidType>(N, std::numeric_limits<weight_type>::max());
+    } else if (_problem == "parents") {
+      this->problem = Problem::Parents;
+      output = std::vector<vidType>(N, -1);
+      graph = parents::initialize_graph(rowptr, col, N, M, algorithm);
     } else {
-      for (int i = 0; i < 1; i++) {
-        queries.push_back(i);
-        distances.emplace_back(N, std::numeric_limits<weight_type>::max());
-      }
+      assert(false && "Invalid problem type");
     }
   }
 
@@ -213,44 +212,88 @@ public:
     }
   }
 
-  auto run() {
-    for (int i = 0; i < queries.size(); i++) {
-      graph->BFS(queries[i], distances[i].data());
+  void run(bool check = false, std::optional<vidType> _source = std::nullopt) {
+    vidType source;
+    if (_source.has_value()) {
+      source = _source.value();
+    } else {
+      source = rand() % N;
     }
-    return true;
-  }
-
-  bool approximatelyEqual(weight_type a, weight_type a_ref,
-                          double absError = 1e-7, double relError = 1e-9) {
-    if (fabs(a - a_ref) <= absError || fabs(a - a_ref) <= a_ref * relError)
-      return true;
-    return false;
-  }
-
-  std::optional<std::string> check() {
-    run();
-    release_memory_postrun();
-    auto reference_distances = distances;
-    {
-      ProblemInput ref = ProblemInput(input, reference::initialize_graph, std::string(""));
-      ref.run();
-      reference_distances = ref.distances;
-    }
-
-    // ProblemInput reference = ProblemInput(this);
-    for (int64_t i = 0; i < distances.size(); i++) {
-      if (distances[i].size() != reference_distances[i].size())
-        return "Incorrect # queries in distance array";
-      for (int64_t j = 0; j < distances[i].size(); j++) {
-        // if (!approximatelyEqual(distances[i][j], reference_distances[i][j]))
-        // {
-        if (distances[i][j] != reference_distances[i][j]) {
-          return "Incorrect value, expected distance " +
-                 std::to_string(reference_distances[i][j]) + ", but got " +
-                 std::to_string(distances[i][j]);
+    graph->BFS(source, output.data());
+    if (check) {
+      if (problem == Problem::Distances) {
+        std::vector<weight_type> ref_distances(N, std::numeric_limits<weight_type>::max());
+        auto ref_graph = reference::initialize_graph(rowptr, col, N, M, "");
+        ref_graph->BFS(source, ref_distances.data());
+        for (int64_t i = 0; i < output.size(); i++) {
+          if (output.size() != ref_distances.size())
+            std::cout << "Incorrect # queries in distance array\n";
+          for (int64_t j = 0; j < output.size(); j++) {
+            if (output[j] != ref_distances[j]) {
+              std::cout << "Incorrect value, expected distance " +
+                               std::to_string(ref_distances[j]) +
+                               ", but got " + std::to_string(output[j]) + "\n";
+            }
+          }
+        }
+      } else {
+        std::vector<vidType> depth(N, -1);
+        std::vector<vidType> to_visit;
+        depth[source] = 0;
+        to_visit.push_back(source);
+        to_visit.reserve(N);
+        // Run BFS to compute depth of each vertex
+        for (auto it = to_visit.begin(); it != to_visit.end(); it++) {
+          vidType i = *it;
+          std::cout << "Visiting " << i << std::endl;
+          std::cout << "Start " << rowptr[i] << " End " << rowptr[i + 1] << std::endl;
+          for (int64_t v = rowptr[i]; v < rowptr[i + 1]; v++) {
+            if (depth[col[v]] == -1) {
+              depth[col[v]] = depth[i] + 1;
+              to_visit.push_back(col[v]);
+              std::cout << "Pushing " << col[v] << " with depth " << depth[col[v]] << std::endl;
+            }
+          }
+        }
+        // print depth array
+        for (int64_t i = 0; i < N; i++) {
+          std::cout << output[i] << " ";
+        }
+        for (int64_t i = 0; i < N; i++) {
+          // Check if vertex is part of the BFS tree
+          if (depth[i] != -1 && output[i] != -1) {
+            // Check if parent is correct
+            if (i == source) {
+              if (!((output[i] == i) && (depth[i] == 0))) {
+                std::cout << "Source wrong";
+              }
+              continue;
+            }
+            bool parent_found = false;
+            for (int64_t j = rowptr[i]; j < rowptr[i + 1]; j++) {
+              if (col[j] == output[i]) {
+                vidType parent = col[j];
+                // Check if parent has correct depth
+                if (depth[parent] != depth[i] - 1) {
+                  std::cout << "Wrong depth of child " + std::to_string(i) +
+                                   " (parent " + std::to_string(parent) +
+                                   "with depth " + std::to_string(depth[parent])
+                            << ")" << std::endl;
+                }
+                parent_found = true;
+                break;
+              }
+            }
+            if (!parent_found) {
+              std::cout << "Couldn't find edge from " << output[i] << " to "
+                        << std::to_string(i) << std::endl;
+            }
+            // Check if parent = -1 and parent = -1
+          } else if (depth[i] != output[i]) {
+            std::cout << "Reachability mismatch" << std::endl;
+          }
         }
       }
     }
-    return std::nullopt;
   }
 };

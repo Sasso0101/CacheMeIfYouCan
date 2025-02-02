@@ -14,7 +14,7 @@ set(LIKWID_DIR "/apps/likwid-4.3.4/lib")
 include_directories(include)
 
 # Add sources
-add_executable(BFS src/complete.cpp src/reference.cpp src/main.cpp)
+add_executable(BFS src/parents.cpp src/complete.cpp src/reference.cpp src/main.cpp)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)

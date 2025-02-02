@@ -2,6 +2,8 @@
 #include <iostream>
 #include <sstream>
 
+namespace export_graph {
+
 class Graph : public BaseGraph {
   eidType *rowptr;
   [[maybe_unused]] vidType *col;
@@ -24,8 +26,4 @@ public:
     std::cout << str.str() << std::endl;
   }
 };
-
-BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
-                            uint64_t M) {
-  return new Graph(rowptr, col, N, M);
 }
