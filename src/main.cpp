@@ -1,6 +1,6 @@
 #include "input.hpp"
 #include <omp.h>
-#include <profiling.hpp>
+// #include <profiling.hpp>
 #include <complete.hpp>
 
 #define USAGE "Usage: %s <schema> [small|large|very_large] [distances|parents]\nThe second argument forces the usage of a specific algorithm. By default this is choosen dynamically. The third argument specifies the output of the algorithm.\n"
@@ -18,8 +18,8 @@ int main(const int argc, char **argv) {
   in >> j;
   quicktype::Inputschema data;
   quicktype::from_json(j, data);
-  ProblemInput p = ProblemInput(data, algorithm, output);
-  LIKWID_MARKER_INIT;
+  ProblemInput p = ProblemInput(data, complete::initialize_graph, algorithm);
+  // LIKWID_MARKER_INIT;
   #pragma omp parallel
   {
     // int thread_id = omp_get_thread_num();
@@ -27,19 +27,39 @@ int main(const int argc, char **argv) {
     {
       printf("Number of threads: %d\n", omp_get_num_threads());
     }
-    LIKWID_MARKER_THREADINIT;
+    // LIKWID_MARKER_THREADINIT;
   }
-  #pragma omp parallel
-  {
-    LIKWID_MARKER_START("bfs");
-  }
+  // #pragma omp parallel
+  // {
+  //   LIKWID_MARKER_START("bfs");
+  // }
+
+  #ifdef DBG_CACHE
+    int perf_ctl_fd;
+    int perf_ctl_ack_fd;
+    char ack[5];
+    perf_ctl_fd = atoi(getenv("PERF_CTL_FD"));
+    perf_ctl_ack_fd = atoi(getenv("PERF_CTL_ACK_FD"));
+
+    write(perf_ctl_fd, "enable\n", 8);
+    read(perf_ctl_ack_fd, ack, 5);
+    assert(strcmp(ack, "ack\n") == 0);
+  #endif
+
   double t_start = omp_get_wtime();
   p.run(false, 1);
   double t_end = omp_get_wtime();
   printf("Runtime: %f\n", t_end - t_start);
-  #pragma omp parallel
-  {
-    LIKWID_MARKER_STOP("bfs");
-  }
-  LIKWID_MARKER_CLOSE;
+
+  #ifdef DBG_CACHE
+    write(perf_ctl_fd, "disable\n", 9);
+    read(perf_ctl_ack_fd, ack, 5);
+    assert(strcmp(ack, "ack\n") == 0);
+  #endif
+
+  // #pragma omp parallel
+  // {
+  //   LIKWID_MARKER_STOP("bfs");
+  // }
+  // LIKWID_MARKER_CLOSE;
 }

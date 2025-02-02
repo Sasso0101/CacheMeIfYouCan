@@ -7,3 +7,4 @@ datasets/
 *.out
 scripts/data*/
 *.sh
+log/*
