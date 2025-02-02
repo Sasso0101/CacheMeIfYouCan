@@ -51,12 +51,12 @@ public:
     for (vidType i = 0; i < N; i++) {
       parents[i] = merged[rowptr[i] + 1];
     }
-    parents[source] = 0;
   }
 
   inline void add_to_frontier(frontier &frontier, mergedType v, mergedType &edges_frontier) const {
     frontier.push_back(v);
-    edges_frontier += copy_unmarked(v);
+    mergedType vid = copy_unmarked(v);
+    edges_frontier += rowptr[vid + 1] - rowptr[vid] - 2;
   }
 
   #pragma omp declare reduction(vec_add : std::vector<mergedType> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
@@ -75,7 +75,7 @@ public:
           if (copy_unmarked(start) != 1) {
             add_to_frontier(next_frontier, start, edges_frontier);
           }
-          set_parent(start, merged[j+1]);
+          set_parent(start, copy_unmarked(merged[j]));
           break;
         }
       }

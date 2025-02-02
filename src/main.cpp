@@ -34,7 +34,7 @@ int main(const int argc, char **argv) {
     LIKWID_MARKER_START("bfs");
   }
   double t_start = omp_get_wtime();
-  p.run(true, 0);
+  p.run(false, 1);
   double t_end = omp_get_wtime();
   printf("Runtime: %f\n", t_end - t_start);
   #pragma omp parallel

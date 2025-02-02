@@ -11,7 +11,7 @@
 #include <complete.hpp>
 #include <parents.hpp>
 
-enum class Problem { Distances, Parents };
+enum class Problem { Distances, Parents, Reference };
 
 class ProblemInput {
   quicktype::Inputschema input;
@@ -45,15 +45,6 @@ public:
       vidType dst = input_col[i];
       col[i] = dst;
       rowptr[src + 1] = i+1;
-    }
-
-    std::cout << "N: " << N << " M: " << M << std::endl;
-    for (int64_t i = 0; i < N; i++) {
-      std::cout << rowptr[i] << " ";
-      for (int64_t j = rowptr[i]; j < rowptr[i + 1]; j++) {
-        std::cout << col[j] << " ";
-      }
-      std::cout << std::endl;
     }
   }
 
@@ -112,7 +103,11 @@ public:
       this->problem = Problem::Distances;
       graph = complete::initialize_graph(rowptr, col, N, M, algorithm);
       output = std::vector<vidType>(N, std::numeric_limits<weight_type>::max());
-    } else if (_problem == "parents") {
+    } else if (_problem == "reference") {
+      this->problem = Problem::Reference;
+      graph = reference::initialize_graph(rowptr, col, N, M, algorithm);
+      output = std::vector<vidType>(N, std::numeric_limits<weight_type>::max());
+    }else if (_problem == "parents") {
       this->problem = Problem::Parents;
       output = std::vector<vidType>(N, -1);
       graph = parents::initialize_graph(rowptr, col, N, M, algorithm);
@@ -213,6 +208,8 @@ public:
   }
 
   void run(bool check = false, std::optional<vidType> _source = std::nullopt) {
+    assert(problem == Problem::Reference && check &&
+           "Reference problem doesn't support checking");
     vidType source;
     if (_source.has_value()) {
       source = _source.value();
@@ -221,22 +218,23 @@ public:
     }
     graph->BFS(source, output.data());
     if (check) {
+      auto ref_input = ProblemInput(input, "default", "reference");
       if (problem == Problem::Distances) {
-        std::vector<weight_type> ref_distances(N, std::numeric_limits<weight_type>::max());
-        auto ref_graph = reference::initialize_graph(rowptr, col, N, M, "");
-        ref_graph->BFS(source, ref_distances.data());
-        for (int64_t i = 0; i < output.size(); i++) {
-          if (output.size() != ref_distances.size())
-            std::cout << "Incorrect # queries in distance array\n";
-          for (int64_t j = 0; j < output.size(); j++) {
-            if (output[j] != ref_distances[j]) {
+        ref_input.run(false, source);
+        auto ref_distances = ref_input.output;
+        if (output.size() != ref_distances.size()) {
+          std::cout << "Incorrect # queries in distance array\n";
+        } else {
+          for (int64_t i = 0; i < output.size(); i++) {
+            if (output[i] != ref_distances[i]) {
               std::cout << "Incorrect value, expected distance " +
-                               std::to_string(ref_distances[j]) +
-                               ", but got " + std::to_string(output[j]) + "\n";
+                              std::to_string(ref_distances[i]) +
+                              ", but got " + std::to_string(output[i]) + "\n";
             }
           }
         }
       } else {
+        std::cout << "Checking parents\n";
         std::vector<vidType> depth(N, -1);
         std::vector<vidType> to_visit;
         depth[source] = 0;
@@ -245,19 +243,12 @@ public:
         // Run BFS to compute depth of each vertex
         for (auto it = to_visit.begin(); it != to_visit.end(); it++) {
           vidType i = *it;
-          std::cout << "Visiting " << i << std::endl;
-          std::cout << "Start " << rowptr[i] << " End " << rowptr[i + 1] << std::endl;
-          for (int64_t v = rowptr[i]; v < rowptr[i + 1]; v++) {
-            if (depth[col[v]] == -1) {
-              depth[col[v]] = depth[i] + 1;
-              to_visit.push_back(col[v]);
-              std::cout << "Pushing " << col[v] << " with depth " << depth[col[v]] << std::endl;
+          for (int64_t v = ref_input.rowptr[i]; v < ref_input.rowptr[i + 1]; v++) {
+            if (depth[ref_input.col[v]] == -1) {
+              depth[ref_input.col[v]] = depth[i] + 1;
+              to_visit.push_back(ref_input.col[v]);
             }
           }
-        }
-        // print depth array
-        for (int64_t i = 0; i < N; i++) {
-          std::cout << output[i] << " ";
         }
         for (int64_t i = 0; i < N; i++) {
           // Check if vertex is part of the BFS tree
@@ -270,9 +261,9 @@ public:
               continue;
             }
             bool parent_found = false;
-            for (int64_t j = rowptr[i]; j < rowptr[i + 1]; j++) {
-              if (col[j] == output[i]) {
-                vidType parent = col[j];
+            for (int64_t j = ref_input.rowptr[i]; j < ref_input.rowptr[i + 1]; j++) {
+              if (ref_input.col[j] == output[i]) {
+                vidType parent = ref_input.col[j];
                 // Check if parent has correct depth
                 if (depth[parent] != depth[i] - 1) {
                   std::cout << "Wrong depth of child " + std::to_string(i) +
