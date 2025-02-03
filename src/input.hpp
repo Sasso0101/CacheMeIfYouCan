@@ -1,10 +1,10 @@
 #include "inputschema.cpp"
 #include <cassert>
 #include <cstdint>
+#include <cstdlib>
 #include <fstream>
 #include <graph.hpp>
 #include <iostream>
-#include <optional>
 #include <random>
 #include <reference.hpp>
 #include <string>
@@ -22,6 +22,7 @@ class ProblemInput {
   Problem problem;
   std::vector<weight_type> output;
   BaseGraph *graph;
+  std::vector<vidType> queries;
 
 public:
   uint64_t get_num_operations() { return M; }
@@ -113,6 +114,15 @@ public:
       graph = parents::initialize_graph(rowptr, col, N, M, algorithm);
     } else {
       assert(false && "Invalid problem type");
+    }
+    if (_input.sources.has_value()) {
+      for (int i = 0; i < _input.sources.value().size(); i++) {
+        queries.push_back(_input.sources.value()[i]);
+      }
+    } else {
+      for (int i = 0; i < 1; i++) {
+        queries.push_back(i);
+      }
     }
   }
 
@@ -207,17 +217,12 @@ public:
     }
   }
 
-  void run(bool check = false, std::optional<vidType> _source = std::nullopt) {
-    assert(problem == Problem::Reference && check &&
-           "Reference problem doesn't support checking");
-    vidType source;
-    if (_source.has_value()) {
-      source = _source.value();
-    } else {
-      source = rand() % N;
-    }
+  void run(bool check = false, uint32_t source = 0) {
     graph->BFS(source, output.data());
     if (check) {
+      assert(problem != Problem::Reference || !check &&
+            "Reference problem doesn't support checking");
+      assert(source < N && "Source vertex out of bounds");
       auto ref_input = ProblemInput(input, "default", "reference");
       if (problem == Problem::Distances) {
         ref_input.run(false, source);
@@ -234,7 +239,6 @@ public:
           }
         }
       } else {
-        std::cout << "Checking parents\n";
         std::vector<vidType> depth(N, -1);
         std::vector<vidType> to_visit;
         depth[source] = 0;
@@ -268,7 +272,7 @@ public:
                 if (depth[parent] != depth[i] - 1) {
                   std::cout << "Wrong depth of child " + std::to_string(i) +
                                    " (parent " + std::to_string(parent) +
-                                   "with depth " + std::to_string(depth[parent])
+                                   " with depth " + std::to_string(depth[parent])
                             << ")" << std::endl;
                 }
                 parent_found = true;

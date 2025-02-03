@@ -74,6 +74,6 @@ int main(const int argc, char **argv) {
   in >> j;
   quicktype::Inputschema data;
   quicktype::from_json(j, data);
-  ProblemInput p = ProblemInput(data, initialize_graph, std::string(""));
+  ProblemInput p = ProblemInput(data, "", "");
   p.run();
 }

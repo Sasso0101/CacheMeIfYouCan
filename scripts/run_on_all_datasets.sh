@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Check if the executable and number of runs are provided
-if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
-    echo "Usage: $0 <num_runs> <timeout> <log_filename> <executable> <executable_args>"
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+    echo "Usage: $0 <timeout> <log_filename> <executable> <executable_args>"
     exit 1
 fi
 
@@ -17,34 +17,44 @@ trap terminate_script SIGINT SIGTERM
 
 # TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
-NUM_RUNS=$1
-TIMEOUT=$2
-LOG_FILE="$3.log" # "output_${TIMESTAMP}.log"
-EXECUTABLE=$4
-DATASET_DIR="schemas"
+TIMEOUT=$1
+LOG_FILE="$2.log" # "output_${TIMESTAMP}.log"
+EXECUTABLE=$3
+
+# Read source vertices from sources.txt, the file has the following format:
+# <dataset_name> <source_node_1> <source_node_2> ... <source_node_n>
+declare -A DATASETS
+while IFS= read -r line
+do
+    # Split the line into an array
+    IFS=' ' read -r -a array <<< "$line"
+    dataset_name=${array[0]}
+    DATASETS[$dataset_name]=${array[@]:1}
+done < sources.txt
 
 # Clear the log file
 > $LOG_FILE
 
-# Iterate over all json files in the dataset directory
-for dataset in "$DATASET_DIR"/*.json; 
+# Iterate over datasets in sources.txt
+for dataset in "${!DATASETS[@]}"; 
 do
-    # Remove the .json extension to get the dataset name
-    dataset_name=$(basename "$dataset" .json)
-    
     # Run the executable with the dataset and append the output to the log file
-    EXECUTABLE_ARGS="${@:5}"
-    for ((i=1; i<=NUM_RUNS; i++)); do
-        echo "Running $EXECUTABLE on $dataset_name with arguments $EXECUTABLE_ARGS (Run $i/$NUM_RUNS)"
-        echo "Running $EXECUTABLE on $dataset_name with arguments $EXECUTABLE_ARGS (Run $i/$NUM_RUNS)" >> $LOG_FILE
-        echo "Command: $EXECUTABLE $dataset_name $EXECUTABLE_ARGS"
+    EXECUTABLE_ARGS="${@:4}"
+    # Enumerate the sources for the dataset
+    run_count=1
+    length=$(echo ${DATASETS[$dataset]} | wc -w)
+    for source in ${DATASETS[$dataset]}; do
+        echo "Running $EXECUTABLE on $dataset with arguments $EXECUTABLE_ARGS with source $source (Run $run_count/$length)"
+        echo "Running $EXECUTABLE on $dataset with arguments $EXECUTABLE_ARGS with source $source (Run $run_count/$length)" >> $LOG_FILE
         
-        timeout "$TIMEOUT" "$EXECUTABLE" "$dataset_name" "$EXECUTABLE_ARGS" >> $LOG_FILE 2>&1
-        if [ $? -eq 124 ]; then
-            echo "TIMEOUT"
-            echo "TIMEOUT" >> $LOG_FILE
-            break
+        if [ "$EXECUTABLE" == "beamer" ]; then
+            echo "Command: gapbs/bfs -f datasets/$dataset.sg -n 1 -r $source"
+            gapbs/bfs -f datasets/"${dataset}".sg -n 1 -r "$source" >> $LOG_FILE 2>&1
+        else
+            echo "Command: $EXECUTABLE $dataset $source $EXECUTABLE_ARGS"
+            "$EXECUTABLE" "$dataset" "$source" ${EXECUTABLE_ARGS[@]} >> $LOG_FILE 2>&1
         fi
+        run_count=$((run_count + 1))
     done
     echo -e "\n" >> $LOG_FILE
     echo "--------------------------------------------------"

@@ -2,23 +2,26 @@
 #include <omp.h>
 // #include <profiling.hpp>
 #include <complete.hpp>
+#include <string>
 
-#define USAGE "Usage: %s <schema> [small|large|very_large] [distances|parents]\nThe second argument forces the usage of a specific algorithm. By default this is choosen dynamically. The third argument specifies the output of the algorithm.\n"
+#define USAGE "Usage: %s <schema> [source] [small|large|classic] [distances|parents] [check]\n The second argument specifies the source vertex. By default this is '0'. The third argument forces the usage of a specific algorithm. By default this is choosen dynamically. The forth argument specifies the output of the algorithm. By default this is 'distances'.\n"
 
 int main(const int argc, char **argv) {
-  if (argc < 2 || argc > 4) {
+  if (argc < 2 || argc > 6) {
     printf(USAGE, argv[0]);
     return 1;
   }
-  std::string algorithm = (argc >= 3) ? argv[2] : "default";
-  std::string output = (argc == 4) ? argv[3] : "distances";
+  std::string source = (argc >= 3) ? argv[2] : "0";
+  std::string algorithm = (argc >= 4) ? argv[3] : "default";
+  std::string problem = (argc >= 5) ? argv[4] : "distances";
+  bool check = (argc == 6) ? true : false;
 
   std::ifstream in("schemas/" + std::string(argv[1]) + ".json");
   nlohmann::json j;
   in >> j;
   quicktype::Inputschema data;
   quicktype::from_json(j, data);
-  ProblemInput p = ProblemInput(data, complete::initialize_graph, algorithm);
+  ProblemInput p = ProblemInput(data, algorithm, problem);
   // LIKWID_MARKER_INIT;
   #pragma omp parallel
   {
@@ -45,9 +48,8 @@ int main(const int argc, char **argv) {
     read(perf_ctl_ack_fd, ack, 5);
     assert(strcmp(ack, "ack\n") == 0);
   #endif
-
   double t_start = omp_get_wtime();
-  p.run(false, 1);
+  p.run(check, std::stoi(source));
   double t_end = omp_get_wtime();
   printf("Runtime: %f\n", t_end - t_start);
 

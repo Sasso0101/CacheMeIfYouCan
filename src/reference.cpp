@@ -17,7 +17,6 @@ class Graph : public BaseGraph {
 public:
   Graph(eidType *rowptr, vidType *col, uint64_t N, uint64_t M)
       : rowptr(rowptr), col(col), N(N), M(M) {
-    printf("Graph size: %lu vertices, %lu edges\n", N, M);
   }
   ~Graph() {
     // destructor logic.
