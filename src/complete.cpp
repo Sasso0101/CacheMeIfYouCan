@@ -3,6 +3,7 @@
 #include <omp.h>
 #include <vector>
 #include <limits>
+#include <string>
 
 /*
   NOTE FOR REVIEWERS:

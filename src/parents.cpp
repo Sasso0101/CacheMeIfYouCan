@@ -65,7 +65,9 @@ public:
       for (mergedType i = v + 3; i < end; i++) {
         mergedType neighbor = merged[i];
         if (!IS_VISITED(neighbor)) {
-          add_to_frontier(next_frontier, neighbor);
+          if (merged[neighbor+2] != 1) {
+            add_to_frontier(next_frontier, neighbor);
+          }
           set_parent(neighbor, copy_unmarked(v));
         }
       }
