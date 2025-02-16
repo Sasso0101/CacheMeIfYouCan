@@ -52,6 +52,10 @@ int main(const int argc, char **argv) {
   p.run(check, std::stoi(source));
   double t_end = omp_get_wtime();
   printf("Runtime: %f\n", t_end - t_start);
+  t_start = omp_get_wtime();
+  p.run(check, 50);
+  t_end = omp_get_wtime();
+  printf("Runtime: %f\n", t_end - t_start);
 
   #ifdef DBG_CACHE
     write(perf_ctl_fd, "disable\n", 9);
