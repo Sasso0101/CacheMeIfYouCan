@@ -6,10 +6,7 @@
 #include <graph.hpp>
 #include <iostream>
 #include <random>
-#include <reference.hpp>
 #include <string>
-#include <complete.hpp>
-#include <parents.hpp>
 
 enum class Problem { Distances, Parents, Reference };
 

@@ -6,6 +6,11 @@ cd build
 make BFS
 ```
 
+// MergedCSR is a graph representation that merges the CSR and the
+// row pointer and column index of the classic CSR representation into 
+// a single array to reduce memory accesses.
+
+
 ## How to run
 To run the project, run the following command in the project's root directory:
 ```bash

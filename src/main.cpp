@@ -1,10 +1,43 @@
+#include "graph.hpp"
 #include "input.hpp"
 #include <omp.h>
-// #include <profiling.hpp>
-#include <complete.hpp>
 #include <string>
 
-#define USAGE "Usage: %s <schema> [source] [small|large|classic] [distances|parents] [check]\n The second argument specifies the source vertex. By default this is '0'. The third argument forces the usage of a specific algorithm. By default this is choosen dynamically. The forth argument specifies the output of the algorithm. By default this is 'distances'.\n"
+#define USAGE                                                                  \
+  "Usage: %s <schema> [source] "                                               \
+  "[heuristic|merged_csr|merged_csr_parents|bitmap|classic|reference] "        \
+  "[check]\n The second argument specifies the source vertex. By default "     \
+  "this is '0'. The third argument forces the usage of a specific algorithm. " \
+  "By default a heuristic is used. The forth argument if the output of the "   \
+  "algorithm should be verified against the reference implementation.\n"
+
+BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
+                            uint64_t M, Algorithm algorithm) {
+  switch (algorithm) {
+  case Algorithm::MERGED_CSR_PARENTS:
+    return new MergedCSR_Parents(rowptr, col, N, M);
+    break;
+  case Algorithm::MERGED_CSR:
+    return new MergedCSR(rowptr, col, N, M);
+    break;
+  case Algorithm::BITMAP:
+    return new Bitmap(rowptr, col, N, M);
+    break;
+  case Algorithm::CLASSIC:
+    return new Classic(rowptr, col, N, M);
+    break;
+  case Algorithm::REFERENCE:
+    return new Reference(rowptr, col, N, M);
+    break;
+  case Algorithm::HEURISTIC:
+    if ((float)M / N < 10) { // Graph diameter heuristic
+      return new MergedCSR(rowptr, col, N, M);
+    } else {
+      return new Bitmap(rowptr, col, N, M);
+    }
+    break;
+  }
+}
 
 int main(const int argc, char **argv) {
   if (argc < 2 || argc > 6) {
@@ -22,32 +55,11 @@ int main(const int argc, char **argv) {
   quicktype::Inputschema data;
   quicktype::from_json(j, data);
   ProblemInput p = ProblemInput(data, algorithm, problem);
-  // LIKWID_MARKER_INIT;
-  #pragma omp parallel
+#pragma omp parallel
   {
-    // int thread_id = omp_get_thread_num();
-    #pragma omp master
-    {
-      printf("Number of threads: %d\n", omp_get_num_threads());
-    }
-    // LIKWID_MARKER_THREADINIT;
+#pragma omp master
+    { printf("Number of threads: %d\n", omp_get_num_threads()); }
   }
-  // #pragma omp parallel
-  // {
-  //   LIKWID_MARKER_START("bfs");
-  // }
-
-  #ifdef DBG_CACHE
-    int perf_ctl_fd;
-    int perf_ctl_ack_fd;
-    char ack[5];
-    perf_ctl_fd = atoi(getenv("PERF_CTL_FD"));
-    perf_ctl_ack_fd = atoi(getenv("PERF_CTL_ACK_FD"));
-
-    write(perf_ctl_fd, "enable\n", 8);
-    read(perf_ctl_ack_fd, ack, 5);
-    assert(strcmp(ack, "ack\n") == 0);
-  #endif
   double t_start = omp_get_wtime();
   p.run(check, std::stoi(source));
   double t_end = omp_get_wtime();
@@ -56,16 +68,4 @@ int main(const int argc, char **argv) {
   p.run(check, 50);
   t_end = omp_get_wtime();
   printf("Runtime: %f\n", t_end - t_start);
-
-  #ifdef DBG_CACHE
-    write(perf_ctl_fd, "disable\n", 9);
-    read(perf_ctl_ack_fd, ack, 5);
-    assert(strcmp(ack, "ack\n") == 0);
-  #endif
-
-  // #pragma omp parallel
-  // {
-  //   LIKWID_MARKER_STOP("bfs");
-  // }
-  // LIKWID_MARKER_CLOSE;
 }
