@@ -5,34 +5,34 @@
 #define PARENT_ID(vertex) merged[vertex + 1]
 #define DEGREE(vertex) merged[vertex + 2]
 
-MergedCSR_Parents::MergedCSR_Parents(eidType *rowptr, vidType *col, uint64_t N,
-                                     uint64_t M)
-    : BaseGraph(rowptr, col, N, M) {
-  create_merged_csr(rowptr, col, N, M);
+MergedCSR_Parents::MergedCSR_Parents(Graph *graph)
+    : BFS_Impl(graph) {
+  create_merged_csr();
 }
 
+MergedCSR_Parents::~MergedCSR_Parents() { delete[] merged; }
+
 // Create merged CSR from CSR
-void MergedCSR_Parents::create_merged_csr(eidType *rowptr, vidType *col,
-                                          uint64_t N, uint64_t M) {
-  merged = new eidType[M + 3 * N];
+void MergedCSR_Parents::create_merged_csr() {
+  merged = new eidType[graph->M + 3 * graph->N];
   vidType merged_index = 0;
-  for (vidType i = 0; i < N; i++) {
-    vidType start = rowptr[i];
+  for (vidType i = 0; i < graph->N; i++) {
+    vidType start = graph->rowptr[i];
     // Add vertex ID to start of neighbor list
     merged[merged_index++] = i;
     // Add parent ID to start of neighbor list (initialized to -1)
     merged[merged_index++] = -1;
     // Add degree to start of neighbor list
-    merged[merged_index++] = rowptr[i + 1] - rowptr[i];
+    merged[merged_index++] = graph->rowptr[i + 1] - graph->rowptr[i];
     // Copy neighbors
-    for (vidType j = start; j < rowptr[i + 1]; j++, merged_index++) {
-      merged[merged_index] = rowptr[col[j]] + 3 * col[j];
+    for (vidType j = start; j < graph->rowptr[i + 1]; j++, merged_index++) {
+      merged[merged_index] = graph->rowptr[graph->col[j]] + 3 * graph->col[j];
     }
   }
   // Fix rowptr indices by adding offset caused by adding the degree to the
   // start of each neighbor list
-  for (vidType i = 0; i <= N; i++) {
-    rowptr[i] = rowptr[i] + 3 * i;
+  for (vidType i = 0; i <= graph->N; i++) {
+    graph->rowptr[i] = graph->rowptr[i] + 3 * i;
   }
 }
 inline void MergedCSR_Parents::add_to_frontier(frontier &frontier,
@@ -43,8 +43,8 @@ inline void MergedCSR_Parents::add_to_frontier(frontier &frontier,
 void MergedCSR_Parents::compute_parents(weight_type *parents,
                                         vidType source) const {
 #pragma omp parallel for simd schedule(static)
-  for (vidType i = 0; i < N; i++) {
-    parents[i] = merged[rowptr[i] + 1];
+  for (vidType i = 0; i < graph->N; i++) {
+    parents[i] = merged[graph->rowptr[i] + 1];
   }
 }
 
@@ -71,8 +71,8 @@ void MergedCSR_Parents::top_down_step(const frontier &this_frontier,
 
 void MergedCSR_Parents::BFS(vidType source, weight_type *parents) {
   frontier this_frontier;
-  eidType start = rowptr[source];
-  eidType unexplored_edges = M;
+  eidType start = graph->rowptr[source];
+  eidType unexplored_edges = graph->M;
   Direction dir = Direction::TOP_DOWN;
 
   add_to_frontier(this_frontier, start);

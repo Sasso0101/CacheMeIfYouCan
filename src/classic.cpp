@@ -1,9 +1,8 @@
 #include "graph.hpp"
 
-Classic::Classic(eidType *rowptr, vidType *col, uint64_t N, uint64_t M)
-    : BaseGraph(rowptr, col, N, M) {
-  visited = new bool[N];
-}
+Classic::Classic(Graph *graph) : BFS_Impl(graph), visited(new bool[graph->N]) {}
+
+Classic::~Classic() { delete[] visited; }
 
 inline void Classic::set_distance(vidType i, weight_type distance,
                                   weight_type *distances) {
@@ -14,7 +13,7 @@ inline void Classic::set_distance(vidType i, weight_type distance,
 inline void Classic::add_to_frontier(frontier &frontier, vidType v,
                                      vidType &edges_frontier) {
   frontier.push_back(v);
-  edges_frontier += rowptr[v + 1] - rowptr[v];
+  edges_frontier += graph->rowptr[v + 1] - graph->rowptr[v];
 }
 
 #pragma omp declare reduction(                                                 \
@@ -27,12 +26,13 @@ void Classic::bottom_up_step(frontier this_frontier, frontier &next_frontier,
                              vidType &edges_frontier) {
 #pragma omp parallel for reduction(vec_add : next_frontier)                    \
     reduction(+ : edges_frontier) schedule(static)
-  for (vidType i = 0; i < N; i++) {
+  for (vidType i = 0; i < graph->N; i++) {
     if (!visited[i]) {
-      for (vidType j = rowptr[i]; j < rowptr[i + 1]; j++) {
-        if (visited[col[j]] && distances[col[j]] == distance - 1) {
+      for (vidType j = graph->rowptr[i]; j < graph->rowptr[i + 1]; j++) {
+        if (visited[graph->col[j]] &&
+            distances[graph->col[j]] == distance - 1) {
           // If neighbor is in frontier, add this vertex to next frontier
-          if (rowptr[i + 1] - rowptr[i] > 1) {
+          if (graph->rowptr[i + 1] - graph->rowptr[i] > 1) {
             add_to_frontier(next_frontier, i, edges_frontier);
           }
           set_distance(i, distance, distances);
@@ -51,10 +51,10 @@ void Classic::top_down_step(frontier this_frontier, frontier &next_frontier,
     reduction(+ : edges_frontier)                                              \
     schedule(static) if (edges_frontier_old > 150)
   for (const auto &v : this_frontier) {
-    for (vidType i = rowptr[v]; i < rowptr[v + 1]; i++) {
-      vidType neighbor = col[i];
+    for (vidType i = graph->rowptr[v]; i < graph->rowptr[v + 1]; i++) {
+      vidType neighbor = graph->col[i];
       if (!visited[neighbor]) {
-        if (rowptr[neighbor + 1] - rowptr[neighbor] > 1) {
+        if (graph->rowptr[neighbor + 1] - graph->rowptr[neighbor] > 1) {
           add_to_frontier(next_frontier, neighbor, edges_frontier);
         }
         set_distance(neighbor, distance, distances);
@@ -64,7 +64,7 @@ void Classic::top_down_step(frontier this_frontier, frontier &next_frontier,
 }
 
 void Classic::BFS(vidType source, weight_type *distances) {
-  eidType unexplored_edges = M;
+  eidType unexplored_edges = graph->M;
   vidType edges_frontier_old = 0;
   frontier this_frontier;
   Direction dir = Direction::TOP_DOWN;
@@ -75,7 +75,7 @@ void Classic::BFS(vidType source, weight_type *distances) {
   while (!this_frontier.empty()) {
     frontier next_frontier;
     next_frontier.reserve(this_frontier.size());
-    if (dir == Direction::BOTTOM_UP && this_frontier.size() < N / BETA) {
+    if (dir == Direction::BOTTOM_UP && this_frontier.size() < graph->N / BETA) {
       dir = Direction::TOP_DOWN;
     } else if (dir == Direction::TOP_DOWN &&
                edges_frontier > unexplored_edges / ALPHA) {

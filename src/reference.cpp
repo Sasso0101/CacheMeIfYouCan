@@ -1,7 +1,8 @@
 #include <graph.hpp>
 
-Reference::Reference(eidType *rowptr, vidType *col, uint64_t N, uint64_t M)
-    : BaseGraph(rowptr, col, N, M) {}
+Reference::Reference(Graph *graph) : BFS_Impl(graph) {}
+
+Reference::~Reference() {}
 
 void Reference::BFS(vidType source, weight_type *distances) {
   std::vector<vidType> this_frontier;
@@ -10,8 +11,8 @@ void Reference::BFS(vidType source, weight_type *distances) {
   while (!this_frontier.empty()) {
     std::vector<vidType> next_frontier;
     for (const auto &src : this_frontier) {
-      for (uint64_t i = rowptr[src]; i < rowptr[src + 1]; i++) {
-        vidType dst = col[i];
+      for (uint64_t i = graph->rowptr[src]; i < graph->rowptr[src + 1]; i++) {
+        vidType dst = graph->col[i];
         if (distances[src] + 1 < distances[dst]) {
           distances[dst] = distances[src] + 1;
           next_frontier.push_back(dst);

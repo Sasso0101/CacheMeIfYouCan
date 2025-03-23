@@ -1,71 +1,79 @@
 #include "graph.hpp"
-#include "input.hpp"
 #include <omp.h>
 #include <string>
 
 #define USAGE                                                                  \
-  "Usage: %s <schema> [source] "                                               \
-  "[heuristic|merged_csr|merged_csr_parents|bitmap|classic|reference] "        \
-  "[check]\n The second argument specifies the source vertex. By default "     \
-  "this is '0'. The third argument forces the usage of a specific algorithm. " \
-  "By default a heuristic is used. The forth argument if the output of the "   \
-  "algorithm should be verified against the reference implementation.\n"
+  "Usage: %s <schema> <source> <implementation> <check>\nRuns BFS "            \
+  "implementations. \n\nMandatory arguments:\n  <schema>\t path to JSON "      \
+  "schema of dataset \n\nOptional arguments:\n  <source>\t : integer. Source vertex ID "     \
+  "('0' by default) \n  <algorithm>\t : 'merged_csr_parents', 'merged_csr', "     \
+  "'bitmap', 'classic', 'reference', 'heuristic' ('heuristic' by default) \n  <check>\t : 'true', false'. Checks correctness of the result ('false' by default)\n"
 
-BaseGraph *initialize_graph(eidType *rowptr, vidType *col, uint64_t N,
-                            uint64_t M, Algorithm algorithm) {
-  switch (algorithm) {
-  case Algorithm::MERGED_CSR_PARENTS:
-    return new MergedCSR_Parents(rowptr, col, N, M);
-    break;
-  case Algorithm::MERGED_CSR:
-    return new MergedCSR(rowptr, col, N, M);
-    break;
-  case Algorithm::BITMAP:
-    return new Bitmap(rowptr, col, N, M);
-    break;
-  case Algorithm::CLASSIC:
-    return new Classic(rowptr, col, N, M);
-    break;
-  case Algorithm::REFERENCE:
-    return new Reference(rowptr, col, N, M);
-    break;
-  case Algorithm::HEURISTIC:
-    if ((float)M / N < 10) { // Graph diameter heuristic
-      return new MergedCSR(rowptr, col, N, M);
+BFS_Impl *initialize_BFS(std::string filename, std::string algo_str) {
+  Graph *graph = new Graph(filename);
+
+  if (algo_str == "merged_csr_parents") {
+    return new MergedCSR_Parents(graph);
+  } else if (algo_str == "merged_csr") {
+    return new MergedCSR(graph);
+  } else if (algo_str == "bitmap") {
+    return new Bitmap(graph);
+  } else if (algo_str == "classic") {
+    return new Classic(graph);
+  } else if (algo_str == "reference") {
+    return new Reference(graph);
+  } else {
+    if ((float)(graph->M) / graph->N < 10) { // Graph diameter heuristic
+      return new MergedCSR(graph);
     } else {
-      return new Bitmap(rowptr, col, N, M);
+      return new Bitmap(graph);
     }
-    break;
   }
 }
 
 int main(const int argc, char **argv) {
-  if (argc < 2 || argc > 6) {
+  if (argc < 2 || argc > 5) {
     printf(USAGE, argv[0]);
     return 1;
   }
-  std::string source = (argc >= 3) ? argv[2] : "0";
-  std::string algorithm = (argc >= 4) ? argv[3] : "default";
-  std::string problem = (argc >= 5) ? argv[4] : "distances";
-  bool check = (argc == 6) ? true : false;
+  std::string source = "0";
+  bool check = false;
 
-  std::ifstream in("schemas/" + std::string(argv[1]) + ".json");
-  nlohmann::json j;
-  in >> j;
-  quicktype::Inputschema data;
-  quicktype::from_json(j, data);
-  ProblemInput p = ProblemInput(data, algorithm, problem);
+  if (argc > 2) {
+    source = argv[2];
+  }
+  if (argc > 4) {
+    std::string check_str = argv[4];
+    if (check_str == "true") {
+      check = true;
+    }
+  }
+
 #pragma omp parallel
   {
 #pragma omp master
     { printf("Number of threads: %d\n", omp_get_num_threads()); }
   }
   double t_start = omp_get_wtime();
-  p.run(check, std::stoi(source));
+  BFS_Impl *bfs = initialize_BFS(std::string(argv[2]), std::string(argv[3]));
   double t_end = omp_get_wtime();
-  printf("Runtime: %f\n", t_end - t_start);
+
+  printf("Initialization: %f\n", t_end - t_start);
+
+  weight_type *distances = new weight_type[bfs->graph->N];
+  vidType source_vid = std::stoi(source);
+
   t_start = omp_get_wtime();
-  p.run(check, 50);
+  bfs->BFS(source_vid, distances);
   t_end = omp_get_wtime();
+
   printf("Runtime: %f\n", t_end - t_start);
+
+  if (check) {
+    if (dynamic_cast<MergedCSR_Parents *>(bfs)) {
+      bfs->check_parents(distances, source_vid);
+    } else {
+      bfs->check_distances(distances, source_vid);
+    }
+  }
 }

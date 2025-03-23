@@ -6,8 +6,6 @@
 //
 //     Inputschema data = nlohmann::json::parse(jsonString);
 
-#pragma once
-
 #include <optional>
 #include <nlohmann/json.hpp>
 

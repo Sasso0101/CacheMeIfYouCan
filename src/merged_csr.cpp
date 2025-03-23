@@ -4,33 +4,33 @@
 #define DEGREE(vertex) merged[vertex]
 #define DISTANCE(vertex) merged[vertex + 1]
 
-MergedCSR::MergedCSR(eidType *rowptr, vidType *col, uint64_t N, uint64_t M)
-    : BaseGraph(rowptr, col, N, M) {
-  create_merged_csr(rowptr, col, N, M);
+MergedCSR::MergedCSR(Graph *graph) : BFS_Impl(graph) {
+  create_merged_csr();
 }
 
+MergedCSR::~MergedCSR() { delete[] merged; }
+
 // Create merged CSR from CSR
-void MergedCSR::create_merged_csr(eidType *rowptr, vidType *col, uint64_t N,
-                                  uint64_t M) {
-  merged = new eidType[M + 2 * N];
+void MergedCSR::create_merged_csr() {
+  merged = new eidType[graph->M + 2 * graph->N];
   eidType merged_index = 0;
 
 #pragma omp parallel for schedule(static)
-  for (vidType i = 0; i < N; i++) {
-    eidType start = rowptr[i];
+  for (vidType i = 0; i < graph->N; i++) {
+    eidType start = graph->rowptr[i];
     // Add degree to start of neighbor list
-    merged[merged_index++] = rowptr[i + 1] - rowptr[i];
+    merged[merged_index++] = graph->rowptr[i + 1] - graph->rowptr[i];
     // Initialize distance
     merged[merged_index++] = std::numeric_limits<weight_type>::max();
     // Copy neighbors
-    for (eidType j = start; j < rowptr[i + 1]; j++, merged_index++) {
-      merged[merged_index] = rowptr[col[j]] + 2 * col[j];
+    for (eidType j = start; j < graph->rowptr[i + 1]; j++, merged_index++) {
+      merged[merged_index] = graph->rowptr[graph->col[j]] + 2 * graph->col[j];
     }
   }
   // Fix rowptr indices caused by adding the degree to the start of each
   // neighbor list
-  for (vidType i = 0; i <= N; i++) {
-    rowptr[i] = rowptr[i] + 2 * i;
+  for (vidType i = 0; i <= graph->N; i++) {
+    graph->rowptr[i] = graph->rowptr[i] + 2 * i;
   }
 }
 
@@ -38,10 +38,10 @@ void MergedCSR::create_merged_csr(eidType *rowptr, vidType *col, uint64_t N,
 void MergedCSR::compute_distances(weight_type *distances,
                                   vidType source) const {
 #pragma omp parallel for simd schedule(static)
-  for (vidType i = 0; i < N; i++) {
-    distances[i] = DISTANCE(rowptr[i]);
+  for (vidType i = 0; i < graph->N; i++) {
+    distances[i] = DISTANCE(graph->rowptr[i]);
     // Reset distance for next BFS
-    DISTANCE(rowptr[i] + 1) = std::numeric_limits<weight_type>::max();
+    DISTANCE(graph->rowptr[i] + 1) = std::numeric_limits<weight_type>::max();
   }
   distances[source] = 0;
 }
@@ -77,7 +77,7 @@ void MergedCSR::top_down_step(const frontier &this_frontier,
 
 void MergedCSR::BFS(vidType source, weight_type *distances) {
   frontier this_frontier;
-  eidType start = rowptr[source];
+  eidType start = graph->rowptr[source];
 
   add_to_frontier(this_frontier, start);
   DISTANCE(start) = 0;
