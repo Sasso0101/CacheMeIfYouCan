@@ -11,7 +11,7 @@ set(CMAKE_CXX_FLAGS "-O3 -march=native")
 include_directories(include)
 
 # Add sources
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "src/implementations/*.cpp")
 add_executable(BFS ${SOURCES})
 
 # Add OpenMP

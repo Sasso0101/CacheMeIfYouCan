@@ -5,9 +5,11 @@
 #define USAGE                                                                  \
   "Usage: %s <schema> <source> <implementation> <check>\nRuns BFS "            \
   "implementations. \n\nMandatory arguments:\n  <schema>\t path to JSON "      \
-  "schema of dataset \n\nOptional arguments:\n  <source>\t : integer. Source vertex ID "     \
-  "('0' by default) \n  <algorithm>\t : 'merged_csr_parents', 'merged_csr', "     \
-  "'bitmap', 'classic', 'reference', 'heuristic' ('heuristic' by default) \n  <check>\t : 'true', false'. Checks correctness of the result ('false' by default)\n"
+  "schema of dataset \n  <source>\t : integer. Source vertex ID "              \
+  "('0' by default) \n  <algorithm>\t : 'merged_csr_parents', 'merged_csr', "  \
+  "'bitmap', 'classic', 'reference', 'heuristic' ('heuristic' by default) \n " \
+  " <check>\t : 'true', false'. Checks correctness of the result ('false' by " \
+  "default)\n"
 
 BFS_Impl *initialize_BFS(std::string filename, std::string algo_str) {
   Graph *graph = new Graph(filename);
@@ -55,7 +57,7 @@ int main(const int argc, char **argv) {
     { printf("Number of threads: %d\n", omp_get_num_threads()); }
   }
   double t_start = omp_get_wtime();
-  BFS_Impl *bfs = initialize_BFS(std::string(argv[2]), std::string(argv[3]));
+  BFS_Impl *bfs = initialize_BFS(std::string(argv[1]), std::string(argv[3]));
   double t_end = omp_get_wtime();
 
   printf("Initialization: %f\n", t_end - t_start);

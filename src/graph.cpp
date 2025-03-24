@@ -11,7 +11,7 @@ Graph::Graph(eidType *rowptr, vidType *col, uint64_t N, uint64_t M)
 
 Graph::Graph(std::string &filename) {
   nlohmann::json j;
-  std::ifstream in("schemas/" + filename + ".json");
+  std::ifstream in(filename);
   in >> j;
   quicktype::Inputschema data;
   quicktype::from_json(j, data);
