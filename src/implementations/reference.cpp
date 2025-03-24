@@ -5,7 +5,7 @@ Reference::Reference(Graph *graph) : BFS_Impl(graph) {}
 Reference::~Reference() {}
 
 void Reference::BFS(vidType source, weight_type *distances) {
-  std::vector<vidType> this_frontier;
+  std::vector<vidType> this_frontier = {};
   distances[source] = 0;
   this_frontier.push_back(source);
   while (!this_frontier.empty()) {

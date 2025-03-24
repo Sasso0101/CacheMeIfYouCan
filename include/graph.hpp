@@ -22,6 +22,7 @@ private:
   void construct_from_file(std::string &filename);
   void generate_random_graph(int64_t num_vertices,
                              int64_t num_edges_per_vertex);
+
 public:
   eidType *rowptr;
   vidType *col;
@@ -31,6 +32,7 @@ public:
   Graph(eidType *rowptr, vidType *col, uint64_t N, uint64_t M);
   Graph(std::string &filename);
   ~Graph();
+  void print_graph();
 };
 
 // Base class for BFS implementations
@@ -40,6 +42,7 @@ public:
   virtual void BFS(vidType source, weight_type *distances) = 0;
   void check_distances(const weight_type *distances, vidType source) const;
   void check_parents(const weight_type *parents, vidType source) const;
+
 protected:
   BFS_Impl(Graph *graph) : graph(graph) {}
   ~BFS_Impl() { delete graph; }

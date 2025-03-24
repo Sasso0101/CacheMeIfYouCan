@@ -38,11 +38,11 @@ int main(const int argc, char **argv) {
     printf(USAGE, argv[0]);
     return 1;
   }
-  std::string source = "0";
+  vidType source = 0;
   bool check = false;
 
   if (argc > 2) {
-    source = argv[2];
+    source = std::stoi(argv[2]);
   }
   if (argc > 4) {
     std::string check_str = argv[4];
@@ -63,19 +63,23 @@ int main(const int argc, char **argv) {
   printf("Initialization: %f\n", t_end - t_start);
 
   weight_type *distances = new weight_type[bfs->graph->N];
-  vidType source_vid = std::stoi(source);
 
   t_start = omp_get_wtime();
-  bfs->BFS(source_vid, distances);
+  bfs->BFS(source, distances);
   t_end = omp_get_wtime();
 
   printf("Runtime: %f\n", t_end - t_start);
 
+  printf("First 10 distances:\n");
+  for (int i = 0; i < 10 && i < bfs->graph->N; ++i) {
+    printf("Vertex %d: %u\n", i, distances[i]);
+  }
+
   if (check) {
     if (dynamic_cast<MergedCSR_Parents *>(bfs)) {
-      bfs->check_parents(distances, source_vid);
+      bfs->check_parents(distances, source);
     } else {
-      bfs->check_distances(distances, source_vid);
+      bfs->check_distances(distances, source);
     }
   }
 }

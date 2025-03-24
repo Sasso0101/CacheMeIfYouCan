@@ -1,6 +1,7 @@
 #include "graph.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <fstream>
 #include <random>
 #include <string>
@@ -61,8 +62,12 @@ void Graph::construct_from_coo(std::vector<int64_t> &input_row,
   }
 }
 
-void Graph::construct_from_file(std::string &path) {
+void Graph::construct_from_file(std::string &filename) {
+  std::string path = "datasets/" + filename;
   std::ifstream s{path, s.in | s.binary};
+  if (!s.is_open()) {
+    throw std::runtime_error("Error: Unable to open file " + path);
+  }
 
   s.read((char *)&N, sizeof(decltype(N)));
   s.read((char *)&M, sizeof(decltype(M)));
@@ -70,8 +75,15 @@ void Graph::construct_from_file(std::string &path) {
   rowptr = new eidType[N + 1];
   col = new vidType[M];
 
-  s.read((char *)rowptr, sizeof(eidType) * (N + 1));
-  s.read((char *)col, sizeof(vidType) * M);
+  uint64_t *temp_rowptr = new uint64_t[N + 1];
+  s.read((char *)temp_rowptr, sizeof(uint64_t) * (N + 1));
+  // Convert to eidType from uint64_t
+  for (uint64_t i = 0; i <= N; i++) {
+    rowptr[i] = static_cast<eidType>(temp_rowptr[i]);
+  }
+  delete[] temp_rowptr;
+  s.read((char *)col, sizeof(uint32_t) * M);
+  
   s.close();
 }
 
@@ -107,4 +119,23 @@ void Graph::generate_random_graph(int64_t num_vertices,
     col[i] = std::get<1>(filtered_edges[i]);
   }
   construct_from_coo(row, col);
+}
+
+void Graph::print_graph() {
+  // Print the number of vertices (N) and edges (M) in the graph
+  printf("Number of vertices (N): %lu\n", N);
+  printf("Number of edges (M): %lu\n", M);
+  // Print the rowptr array of the graph
+  printf("Rowptr: ");
+  for (size_t i = 0; i < 10; ++i) {
+    printf("%u ", rowptr[i]);
+  }
+  printf("\n");
+
+  // Print the colidx array of the graph
+  printf("Col: ");
+  for (size_t i = 0; i < 10; ++i) {
+    printf("%u ", col[i]);
+  }
+  printf("\n");
 }
