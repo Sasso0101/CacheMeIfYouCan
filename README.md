@@ -1,4 +1,4 @@
-## Optimized BFS using bitmaps and mergedCSR
+# Cache-optimized BFS on multi-core CPUs
 
 Breadth-First Search (BFS) performance on shared-memory systems is often limited by irregular memory access and cache inefficiencies. This work presents two optimizations for BFS graph traversal: a bitmap-based algorithm designed for small-diameter graphs and MergedCSR, a graph storage format that improves cache locality for large-scale graphs. Experimental results on real-world datasets show an average 1.3× speedup over a state-of-the-art implementation, with MergedCSR reducing RAM accesses by approximately 15%.
 
@@ -32,10 +32,18 @@ Arguments:
   | `<algorithm>` | Implementation used to perform the BFS. One of `merged_csr_parents`, `merged_csr`, `bitmap`, `classic`, `reference`, `heuristic` (`heuristic` by default). See the paper for more details on the implementations. |
   | `<check>`  | `true`, `false`. Checks correctness of the result using a simple single-threaded implementation. (`false` by default) |
 
+## Testing
+
+To run the tests, run the following command in the project's root directory:
+```bash
+ctest --test-dir build/tests
+```
+Each test is a BFS run on a small dataset with a different implementation. The test checks the correctness of the result by comparing it with the reference implementation.
+
 ## Datasets
 The datasets used are provided by the [PPoPP'25 FastCode Challenge](https://fastcode.org/events/fastcode-challenge/spe4ic/#dataset-diversity). Note that they weight several gigabytes in total, so they may take a while to download.
 |        Graph Name       | \|V\| |  \|E\| |      Notes     | Filename |
-|:-----------------------:|:-----:|:------:|:--------------:|:--------:|
+|-------------------------|:-----:|:------:|:--------------:|----------|
 | Social_Network_1        | 4.9M  | 85.8M  | Small diameter | Social_Network_1.json |
 | Web_Graph_1             | 6.6M  | 300M   | Small diameter | Web_Graph_1.json |
 | Collaboration_Network_1 | 1.1M  | 113M   | Small diameter | Collaboration_Network_1.json |
