@@ -29,8 +29,8 @@ Arguments:
   |------------|-----------------------------------------------------------------------------|
   | `<schema>` | Filename of the dataset schema. See the [Datasets](#datasets) section for more details about the available datasets. |
   | `<source>` | Integer. Source vertex of the BFS (`0` by default) |
-  | `<algorithm>` | Implementation used to perform the BFS. One of `merged_csr_parents`, `merged_csr`, `bitmap`, `classic`, `reference`, `heuristic` (`heuristic` by default). See the paper for more details on the implementations. |
-  | `<check>`  | `true`, `false`. Checks correctness of the result using a simple single-threaded implementation. (`false` by default) |
+  | `<algorithm>` | Implementation used to perform the BFS. One of `merged_csr_parents`, `merged_csr`, `bitmap`, `classic`, `reference` or `heuristic` (`heuristic` by default). See the paper for more details on the implementations. |
+  | `<check>`  | `true` or `false`. Checks correctness of the result using a simple single-threaded implementation. (`false` by default) |
 
 ## Testing
 
