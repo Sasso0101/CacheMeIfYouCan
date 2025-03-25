@@ -40,8 +40,9 @@ class BFS_Impl {
 public:
   Graph *graph;
   virtual void BFS(vidType source, weight_type *distances) = 0;
-  void check_distances(const weight_type *distances, vidType source) const;
-  void check_parents(const weight_type *parents, vidType source) const;
+  virtual bool check_result(vidType source, weight_type *distances) = 0;
+  bool check_distances(vidType source, const weight_type *distances) const;
+  bool check_parents(vidType source, const weight_type *parents) const;
 
 protected:
   BFS_Impl(Graph *graph) : graph(graph) {}
@@ -63,14 +64,15 @@ public:
   Bitmap(Graph *graph);
   ~Bitmap();
   void BFS(vidType source, weight_type *distances) override;
+  bool check_result(vidType source, weight_type *distances) override;
 };
 
 // BFS implementation using the MergedCSR graph representation
 class MergedCSR : public BFS_Impl {
 private:
-  eidType *merged;
+  eidType *merged_rowptr;
+  eidType *merged_csr;
 
-  inline void add_to_frontier(frontier &frontier, eidType v) const;
   void top_down_step(const frontier &this_frontier, frontier &next_frontier,
                      const weight_type &distance);
   void compute_distances(weight_type *distances, vidType source) const;
@@ -80,15 +82,16 @@ public:
   MergedCSR(Graph *graph);
   ~MergedCSR();
   void BFS(vidType source, weight_type *distances) override;
+  bool check_result(vidType source, weight_type *distances) override;
 };
 
 // BFS implementation using the MergedCSR graph representation (returning
 // parents)
 class MergedCSR_Parents : public BFS_Impl {
 private:
-  eidType *merged;
+  eidType *merged_rowptr;
+  eidType *merged_csr;
 
-  inline void add_to_frontier(frontier &frontier, eidType v) const;
   void top_down_step(const frontier &this_frontier, frontier &next_frontier);
   void compute_parents(weight_type *parents, vidType source) const;
   void create_merged_csr();
@@ -97,6 +100,7 @@ public:
   MergedCSR_Parents(Graph *graph);
   ~MergedCSR_Parents();
   void BFS(vidType source, weight_type *distances) override;
+  bool check_result(vidType source, weight_type *distances) override;
 };
 
 // BFS implementation using bitmaps to store visited array. Frontiers are stored
@@ -120,6 +124,7 @@ public:
   Classic(Graph *graph);
   ~Classic();
   void BFS(vidType source, weight_type *distances) override;
+  bool check_result(vidType source, weight_type *distances) override;
 };
 
 // Single-threaded BFS implementation using classic CSR
@@ -128,4 +133,5 @@ public:
   Reference(Graph *graph);
   ~Reference();
   void BFS(vidType source, weight_type *distances) override;
+  bool check_result(vidType source, weight_type *distances) override;
 };

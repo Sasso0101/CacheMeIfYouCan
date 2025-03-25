@@ -1,4 +1,6 @@
 #include "graph.hpp"
+#include <algorithm>
+#include <limits>
 #include <omp.h>
 #include <string>
 
@@ -12,7 +14,8 @@
   "default)\n"
 
 BFS_Impl *initialize_BFS(std::string filename, std::string algo_str) {
-  Graph *graph = new Graph(filename);
+  std::string path = "schemas/" + filename;
+  Graph *graph = new Graph(path);
 
   if (algo_str == "merged_csr_parents") {
     return new MergedCSR_Parents(graph);
@@ -62,24 +65,17 @@ int main(const int argc, char **argv) {
 
   printf("Initialization: %f\n", t_end - t_start);
 
-  weight_type *distances = new weight_type[bfs->graph->N];
+  weight_type *result = new weight_type[bfs->graph->N];
+  // Initialize result vector
+  std::fill_n(result, bfs->graph->N, std::numeric_limits<weight_type>::max());
 
   t_start = omp_get_wtime();
-  bfs->BFS(source, distances);
+  bfs->BFS(source, result);
   t_end = omp_get_wtime();
 
   printf("Runtime: %f\n", t_end - t_start);
 
-  printf("First 10 distances:\n");
-  for (int i = 0; i < 10 && i < bfs->graph->N; ++i) {
-    printf("Vertex %d: %u\n", i, distances[i]);
-  }
-
   if (check) {
-    if (dynamic_cast<MergedCSR_Parents *>(bfs)) {
-      bfs->check_parents(distances, source);
-    } else {
-      bfs->check_distances(distances, source);
-    }
+    bfs->check_result(source, result);
   }
 }

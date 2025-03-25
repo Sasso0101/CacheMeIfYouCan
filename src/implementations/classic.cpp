@@ -95,3 +95,7 @@ void Classic::BFS(vidType source, weight_type *distances) {
     this_frontier = std::move(next_frontier);
   }
 }
+
+bool Classic::check_result(vidType source, weight_type *distances) {
+  return BFS_Impl::check_distances(source, distances);
+}

@@ -5,14 +5,18 @@
 #include <fstream>
 #include <random>
 #include <string>
+#include <unistd.h>
 #include "inputschema.cpp"
 
 Graph::Graph(eidType *rowptr, vidType *col, uint64_t N, uint64_t M)
     : rowptr(rowptr), col(col), N(N), M(M) {}
 
-Graph::Graph(std::string &filename) {
+Graph::Graph(std::string &schema_path) {
   nlohmann::json j;
-  std::ifstream in(filename);
+  std::ifstream in(schema_path);
+  if (!in.is_open()) {
+    throw std::runtime_error("Error: Unable to open file " + schema_path + "\n");
+  }
   in >> j;
   quicktype::Inputschema data;
   quicktype::from_json(j, data);
@@ -123,8 +127,8 @@ void Graph::generate_random_graph(int64_t num_vertices,
 
 void Graph::print_graph() {
   // Print the number of vertices (N) and edges (M) in the graph
-  printf("Number of vertices (N): %lu\n", N);
-  printf("Number of edges (M): %lu\n", M);
+  printf("Number of vertices (N): %llu\n", N);
+  printf("Number of edges (M): %llu\n", M);
   // Print the rowptr array of the graph
   printf("Rowptr: ");
   for (size_t i = 0; i < 10; ++i) {

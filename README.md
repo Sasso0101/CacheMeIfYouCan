@@ -1,5 +1,5 @@
 ## How to build
-To build the project, you need cmake (>=3.10) and gcc9.1.0. Clone the repository and run the following commands in the project's root directory:
+To build the project, you need cmake (>=3.14) and gcc9.1.0. Clone the repository and run the following commands in the project's root directory:
 ```bash
 cmake -B build
 cd build

@@ -1,11 +1,7 @@
 .DS_Store
 build/
-output/
-datasets/
 .vscode/
 .cache/
-*.out
-scripts/data*/
-*.sh
-log/*
-scripts/plots
+scripts/
+datasets/*
+!datasets/download_datasets.sh

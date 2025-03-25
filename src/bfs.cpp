@@ -1,21 +1,26 @@
 #include "graph.hpp"
 #include <iostream>
 
-void BFS_Impl::check_distances(const weight_type *distances,
-                               vidType source) const {
+bool BFS_Impl::check_distances(vidType source,
+                               const weight_type *distances) const {
   Reference ref_input(graph);
   weight_type *ref_distances = new weight_type[graph->N];
+  std::fill(ref_distances, ref_distances + graph->N, -1);
   ref_input.BFS(source, ref_distances);
+  bool correct = true;
   for (int64_t i = 0; i < graph->N; i++) {
     if (distances[i] != ref_distances[i]) {
-      std::cout << "Incorrect value, expected distance " +
-                       std::to_string(ref_distances[i]) + ", but got " +
-                       std::to_string(distances[i]) + "\n";
+      std::cout << "Incorrect value for vertex " << i
+                << ", expected distance " + std::to_string(ref_distances[i]) +
+                       ", but got " + std::to_string(distances[i]) + "\n";
+      correct = false;
     }
   }
+  return correct;
 }
 
-void BFS_Impl::check_parents(const weight_type *parents, vidType source) const {
+bool BFS_Impl::check_parents(vidType source, const weight_type *parents) const {
+  bool correct = true;
   std::vector<vidType> depth(graph->N, -1);
   std::vector<vidType> to_visit;
   depth[source] = 0;
@@ -38,6 +43,7 @@ void BFS_Impl::check_parents(const weight_type *parents, vidType source) const {
       if (i == source) {
         if (!((parents[i] == i) && (depth[i] == 0))) {
           std::cout << "Source wrong";
+          correct = false;
         }
         continue;
       }
@@ -51,6 +57,7 @@ void BFS_Impl::check_parents(const weight_type *parents, vidType source) const {
                              " (parent " + std::to_string(parent) +
                              " with depth " + std::to_string(depth[parent])
                       << ")" << std::endl;
+            correct = false;
           }
           parent_found = true;
           break;
@@ -59,10 +66,13 @@ void BFS_Impl::check_parents(const weight_type *parents, vidType source) const {
       if (!parent_found) {
         std::cout << "Couldn't find edge from " << parents[i] << " to "
                   << std::to_string(i) << std::endl;
+        correct = false;
       }
       // Check if parent = -1 and parent = -1
     } else if (depth[i] != parents[i]) {
       std::cout << "Reachability mismatch" << std::endl;
+      correct = false;
     }
   }
+  return correct;
 }

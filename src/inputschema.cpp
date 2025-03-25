@@ -1,10 +1,4 @@
-//  To parse this JSON data, first install
-//
-//      json.hpp  https://github.com/nlohmann/json
-//
-//  Then include this file, and then do
-//
-//     Inputschema data = nlohmann::json::parse(jsonString);
+//  JSON parsing (credits to Fastcode challenge)
 
 #include <optional>
 #include <nlohmann/json.hpp>

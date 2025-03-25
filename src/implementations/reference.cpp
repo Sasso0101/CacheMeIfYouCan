@@ -22,3 +22,7 @@ void Reference::BFS(vidType source, weight_type *distances) {
     std::swap(this_frontier, next_frontier);
   }
 }
+
+bool Reference::check_result(vidType source, weight_type *distances) {
+  return BFS_Impl::check_distances(source, distances);
+}

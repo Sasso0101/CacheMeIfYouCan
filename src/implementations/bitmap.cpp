@@ -104,3 +104,7 @@ void Bitmap::BFS(vidType source, weight_type *distances) {
     visited[i] = false;
   }
 }
+
+bool Bitmap::check_result(vidType source, weight_type *distances) {
+  return BFS_Impl::check_distances(source, distances);
+}

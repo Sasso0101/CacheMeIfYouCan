@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 
 # Set the project name
 project(BFS)
@@ -30,3 +30,7 @@ FetchContent_Declare(json
     DOWNLOAD_EXTRACT_TIMESTAMP FALSE)
 FetchContent_MakeAvailable(json)
 target_link_libraries(BFS PRIVATE nlohmann_json::nlohmann_json)
+
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    add_subdirectory(tests)
+endif()
