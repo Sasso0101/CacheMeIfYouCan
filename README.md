@@ -53,5 +53,5 @@ The datasets used are provided by the [PPoPP'25 FastCode Challenge](https://fast
 | kNN_Graph_1             | 24.9M | 158M   | Large diameter | kNN_Graph_1.json |
 | Synthetic_Sparse_1      | 10M   | 40M    | Large diameter | Synthetic_Sparse_1.json |
 
-#### Acknowledgements
+## Acknowledgements
 This work was partially supported by the EuroHPC JU project within Net4Exa project under grant agreement No 101175702.
