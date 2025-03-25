@@ -1,8 +1,7 @@
 .DS_Store
 build/
-output/
-datasets/
 .vscode/
 .cache/
-*.out
-scripts/data*/
+scripts/
+datasets/*
+!datasets/download_datasets.sh
