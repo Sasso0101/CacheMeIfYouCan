@@ -7,6 +7,16 @@ typedef uint32_t vidType;
 typedef uint32_t eidType;
 typedef uint32_t weight_type;
 
+typedef enum {
+  merged_csr_parents,
+  merged_csr,
+  merged_csr_1,
+  bitmap,
+  classic,
+  reference,
+  heuristic
+} Implementation;
+
 typedef enum { TOP_DOWN, BOTTOM_UP } Direction;
 
 using frontier = std::vector<eidType>;
@@ -132,6 +142,29 @@ class Reference : public BFS_Impl {
 public:
   Reference(Graph *graph);
   ~Reference();
+  void BFS(vidType source, weight_type *distances) override;
+  bool check_result(vidType source, weight_type *distances) override;
+};
+
+// BFS implementation using the MergedCSR graph representation
+class MergedCSR_1 : public BFS_Impl {
+private:
+  eidType *merged_rowptr;
+  eidType *merged_csr;
+
+  void top_down_step(const frontier &this_frontier, frontier &next_frontier,
+                     const weight_type &distance);
+  void compute_distances(weight_type *distances, vidType source) const;
+  void parallel_frontiers(const frontier &this_frontier, weight_type &distance);
+  void create_merged_csr();
+  void check_vertex(eidType i, frontier &next_frontier,
+                    const weight_type &local_distance);
+  void critical_writeback(frontier &next_frontier,
+                          const weight_type &local_distance);
+
+public:
+  MergedCSR_1(Graph *graph);
+  ~MergedCSR_1();
   void BFS(vidType source, weight_type *distances) override;
   bool check_result(vidType source, weight_type *distances) override;
 };

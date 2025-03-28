@@ -5,4 +5,3 @@ build/
 scripts/
 datasets/*
 !datasets/download_datasets.sh
-*.txt

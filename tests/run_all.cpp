@@ -32,6 +32,11 @@ TEST_F(BFSTest, MergedCSR) {
   test_implementation(merged_csr, 5);
 }
 
+TEST_F(BFSTest, MergedCSR_1) {
+  BFS_Impl *merged_csr_1 = new MergedCSR_1(g);
+  test_implementation(merged_csr_1, 5);
+}
+
 TEST_F(BFSTest, MergedCSR_Parents) {
   BFS_Impl *mergedCSR_Parents = new MergedCSR_Parents(g);
   test_implementation(mergedCSR_Parents, 5);

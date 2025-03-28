@@ -31,6 +31,17 @@ FetchContent_Declare(json
 FetchContent_MakeAvailable(json)
 target_link_libraries(BFS PRIVATE nlohmann_json::nlohmann_json)
 
+include(FetchContent)
+FetchContent_Declare(
+    cli11_proj
+    QUIET
+    GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
+    GIT_TAG v2.5.0
+)
+
+FetchContent_MakeAvailable(cli11_proj)
+target_link_libraries(BFS PRIVATE CLI11::CLI11)
+
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     add_subdirectory(tests)
 endif()
