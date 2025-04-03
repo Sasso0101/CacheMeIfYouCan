@@ -1,6 +1,7 @@
 #include "graph.hpp"
 #include <CLI/CLI.hpp>
 #include <algorithm>
+#include <cstdio>
 #include <limits>
 #include <omp.h>
 #include <random>
@@ -96,15 +97,21 @@ int main(const int argc, char **argv) {
   BFS_Impl *bfs = initialize_BFS(schema, impl);
   double t_end = omp_get_wtime();
 
-  printf("Algorithm: %s\n", schema.c_str());
+  printf("Dataset: %s\n", schema.c_str());
   printf("Initialization: %f\n", t_end - t_start);
 
   std::vector<vidType> sources = pick_random_vertices(bfs->graph, runs, seed);
   run_bfs(bfs, sources[0], false); // Dry run to warm up
-  printf("Runtime: ");
+  std::vector<double> times = {};
   for (int i = 0; i < runs; i++) {
     double time = run_bfs(bfs, sources[i], check);
-    printf("%f ", time);
+    times.push_back(time);
   }
-  printf("\n");
+  printf("Runtime: ");
+  double sum = 0;
+  for (double time : times) {
+    printf("%f ", time);
+    sum += time;
+  }
+  printf("\nAverage: %f\n", sum / runs);
 }

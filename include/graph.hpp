@@ -1,6 +1,9 @@
 #pragma once
 #include <cstdint>
+#include <omp.h>
 #include <string>
+#include <atomic>
+#include <semaphore.hpp>
 #include <vector>
 
 typedef uint32_t vidType;
@@ -151,6 +154,14 @@ class MergedCSR_1 : public BFS_Impl {
 private:
   eidType *merged_rowptr;
   eidType *merged_csr;
+  std::atomic<std::uint32_t> waiting_threads;
+  std::vector<vidType> comm_frontier;
+  weight_type comm_distance;
+  semaphore *readers_lock;
+  semaphore *comm_lock;
+  uint64_t overwrites;
+  uint64_t reduntants;
+  std::vector<uint32_t> thread_errors;
 
   void top_down_step(const frontier &this_frontier, frontier &next_frontier,
                      const weight_type &distance);
@@ -161,6 +172,7 @@ private:
                     const weight_type &local_distance);
   void critical_writeback(frontier &next_frontier,
                           const weight_type &local_distance);
+  void balance_threads(frontier &next_frontier, weight_type &local_distance);
 
 public:
   MergedCSR_1(Graph *graph);

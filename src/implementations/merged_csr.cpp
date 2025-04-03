@@ -41,7 +41,7 @@ void MergedCSR::compute_distances(weight_type *distances,
   for (vidType i = 0; i < graph->N; i++) {
     distances[i] = DISTANCE(merged_rowptr[i]);
     // Reset distance for next BFS
-    DISTANCE(merged_rowptr[i] + 1) = std::numeric_limits<weight_type>::max();
+    DISTANCE(merged_rowptr[i]) = std::numeric_limits<weight_type>::max();
   }
   distances[source] = 0;
 }
