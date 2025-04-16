@@ -1,5 +1,8 @@
 #include "graph.hpp"
+#include <cstdint>
+#include <cstdio>
 #include <limits>
+#include <omp.h>
 
 #define DEGREE(vertex) merged_csr[vertex]
 #define DISTANCE(vertex) merged_csr[vertex + 1]
@@ -71,14 +74,23 @@ void MergedCSR::top_down_step(const frontier &this_frontier,
   }
 }
 
+typedef struct {
+  double time;
+  uint64_t frontier_size;
+  weight_type distance;
+} log_t;
+
 void MergedCSR::BFS(vidType source, weight_type *distances) {
   frontier this_frontier;
   eidType start = merged_rowptr[source];
+  std::vector<log_t> logs;
 
   this_frontier.push_back(start);
   DISTANCE(start) = 0;
   weight_type distance = 1;
   while (!this_frontier.empty()) {
+    // Log the current state
+    logs.emplace_back(log_t {omp_get_wtime(), this_frontier.size(), distance});
     frontier next_frontier;
     next_frontier.reserve(this_frontier.size());
     top_down_step(this_frontier, next_frontier, distance);
@@ -86,6 +98,16 @@ void MergedCSR::BFS(vidType source, weight_type *distances) {
     this_frontier = std::move(next_frontier);
   }
   compute_distances(distances, source);
+
+  // Store frontier sizes into a file
+  FILE *fp;
+  fp = fopen("scripts/logs.txt", "w");
+  for (const auto &log : logs) {
+    fprintf(fp, "Time: %f, Frontier size: %llu, Distance: %u\n",
+        log.time, log.frontier_size, log.distance);
+  }
+  fclose(fp);
+  logs.clear();
 }
 
 bool MergedCSR::check_result(vidType source, weight_type *distances) {

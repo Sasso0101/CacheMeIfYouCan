@@ -1,9 +1,9 @@
 #pragma once
+#include <atomic>
 #include <cstdint>
 #include <omp.h>
-#include <string>
-#include <atomic>
 #include <semaphore.hpp>
+#include <string>
 #include <vector>
 
 typedef uint32_t vidType;
@@ -173,6 +173,8 @@ private:
   void critical_writeback(frontier &next_frontier,
                           const weight_type &local_distance);
   void balance_threads(frontier &next_frontier, weight_type &local_distance);
+  void donate_frontier(frontier &next_frontier, weight_type &local_distance);
+  void obtain_frontier(frontier &next_frontier, weight_type &local_distance);
 
 public:
   MergedCSR_1(Graph *graph);

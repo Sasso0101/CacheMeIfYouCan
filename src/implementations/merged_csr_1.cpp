@@ -1,7 +1,6 @@
 #include "graph.hpp"
 #include <cstdint>
 #include <cstdio>
-#include <fstream>
 #include <limits>
 #include <omp.h>
 #include <sys/wait.h>
@@ -95,41 +94,55 @@ void MergedCSR_1::check_vertex(eidType v, frontier &next_frontier,
 
 std::vector<std::vector<uint32_t>> frontier_sizes;
 
-void MergedCSR_1::balance_threads(frontier &next_frontier,
+void MergedCSR_1::donate_frontier(frontier &next_frontier,
                                   weight_type &local_distance) {
-  if (next_frontier.size() > 50) {
-    // Guarantee that only one thread will enter this block and that the reader
-    // has finished reading
+  // Guarantee that only one thread will enter this block and that the reader
+  // has finished reading
+  if (comm_lock->try_acquire()) {
+    printf("Thread %d: Donating frontier\n", omp_get_thread_num());
     if (waiting_threads > 0) {
-      if (comm_lock->try_acquire()) {
-        if (waiting_threads > 0) {
-          waiting_threads--;
-          size_t half_size = next_frontier.size() / 2;
-          comm_frontier.clear();
-          comm_frontier.insert(comm_frontier.end(),
-                               next_frontier.begin() + half_size,
-                               next_frontier.end());
-          next_frontier.erase(next_frontier.begin() + half_size,
-                              next_frontier.end());
-          comm_distance = local_distance;
-          readers_lock->release();
-        } else {
-          comm_lock->release();
-        }
-      }
-    }
-  } else if (next_frontier.size() == 0 || thread_errors[omp_get_thread_num()] > 100) {
-    waiting_threads++;
-    if (waiting_threads == omp_get_num_threads()) {
-      readers_lock->release(omp_get_num_threads());
-    }
-    readers_lock->acquire();
-    if (waiting_threads < omp_get_num_threads()) {
-      next_frontier = std::move(comm_frontier);
-      local_distance = comm_distance++;
-      thread_errors[omp_get_thread_num()] = 0;
+      waiting_threads--;
+      size_t half_size = next_frontier.size() / 2;
+      comm_frontier.clear();
+      comm_frontier.insert(comm_frontier.end(),
+                           next_frontier.begin() + half_size,
+                           next_frontier.end());
+      next_frontier.erase(next_frontier.begin() + half_size,
+                          next_frontier.end());
+      comm_distance = local_distance;
+      readers_lock->release();
+    } else {
       comm_lock->release();
     }
+  }
+}
+
+void MergedCSR_1::obtain_frontier(frontier &next_frontier,
+                                  weight_type &local_distance) {
+  waiting_threads++;
+  readers_lock->acquire();
+  if (waiting_threads != omp_get_num_threads() - 1) {
+    next_frontier = std::move(comm_frontier);
+    local_distance = comm_distance++;
+    // thread_errors[omp_get_thread_num()] = 0;
+    comm_lock->release();
+  } else {
+    next_frontier.clear();
+  }
+}
+
+void MergedCSR_1::balance_threads(frontier &next_frontier,
+                                  weight_type &local_distance) {
+  if (next_frontier.size() == 0) {
+    printf("Thread %d: No more vertices to process\n", omp_get_thread_num());
+    if (waiting_threads == omp_get_num_threads() - 1) {
+      printf("Thread %d: done!\n", omp_get_thread_num());
+      readers_lock->release(omp_get_num_threads());
+    } else {
+      obtain_frontier(next_frontier, local_distance);
+    }
+  } else if (next_frontier.size() > 50 && waiting_threads > 0) {
+    donate_frontier(next_frontier, local_distance);
   }
 }
 
@@ -147,7 +160,7 @@ void MergedCSR_1::critical_writeback(frontier &next_frontier,
       if (DISTANCE(v) > local_distance) {
         if (DISTANCE(v) != std::numeric_limits<weight_type>::max()) {
           overwrites++;
-          thread_errors[THREAD(v)]++;
+          // thread_errors[THREAD(v)]++;
         }
         THREAD(v) = thread_id;
         DISTANCE(v) = local_distance;
@@ -204,7 +217,8 @@ void MergedCSR_1::BFS(vidType source, weight_type *distances) {
   overwrites = 0;
   reduntants = 0;
   waiting_time = 0;
-  thread_errors.resize(omp_get_max_threads(), 0);
+  // thread_errors.clear();
+  // thread_errors.resize(omp_get_max_threads(), 0);
 
   frontier this_frontier;
   eidType start = merged_rowptr[source];
@@ -224,7 +238,7 @@ void MergedCSR_1::BFS(vidType source, weight_type *distances) {
   compute_distances(distances, source);
   printf("Overwrites: %llu\n", overwrites);
   printf("Redundants: %llu\n", reduntants);
-  printf("Waiting time: %f\n", waiting_time/omp_get_max_threads());
+  printf("Waiting time: %f\n", waiting_time / omp_get_max_threads());
   // Store frontier sizes into a file
   // std::ofstream outfile("scripts/frontier_sizes.txt");
   // if (outfile.is_open()) {
