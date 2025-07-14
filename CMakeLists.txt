@@ -14,6 +14,9 @@ include_directories(include)
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/implementations/*.cpp")
 add_executable(BFS ${SOURCES})
 
+add_subdirectory(distributed_mmio)
+target_link_libraries(BFS PRIVATE distributed_mmio)
+
 # Add OpenMP
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
@@ -31,6 +34,11 @@ FetchContent_Declare(json
 FetchContent_MakeAvailable(json)
 target_link_libraries(BFS PRIVATE nlohmann_json::nlohmann_json)
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    add_subdirectory(tests)
-endif()
+# Add Debug Target
+add_custom_target(debug
+    COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
+    COMMAND ${CMAKE_BUILD_TOOL} -j
+    COMMAND gdb --args $<TARGET_FILE:BFS>
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Building and running BFS in debug mode with gdb"
+)

@@ -1,0 +1,105 @@
+variables:
+  pioneer_ncpus: [1, 2, 4, 8, 16, 32, 64]
+  bananaf3_ncpus: [1, 2, 4, 8]
+  arriesgado_ncpus: [1, 2, 4]
+  hpc_ncpus: [1, 2, 4, 8, 16, 24]
+  baldo_ncpus: [1, 2, 4, 8]
+  
+hca:
+  scheduler: slurm
+
+  default_conf:
+    nodes: 1
+    ntasks: 1
+    exclusive: true
+    time: "00:10:00" 
+
+  configs:
+    - name: "pioneer_{pioneer_ncpus}cpus"
+      partition: "pioneer"
+      cpus_per_task: "{pioneer_ncpus}"
+      env:
+        - "OMP_NUM_THREADS={pioneer_ncpus}"
+
+    - name: "arriesgado_{arriesgado_ncpus}cpus"
+      partition: "arriesgado-jammy"
+      cpus_per_task: "{arriesgado_ncpus}"
+      env:
+        - "OMP_NUM_THREADS={arriesgado_ncpus}"
+
+    - name: "bananaf3_{bananaf3_ncpus}cpus"
+      partition: "bananaf3"
+      cpus_per_task: "{bananaf3_ncpus}"
+      env:
+        - "OMP_NUM_THREADS={bananaf3_ncpus}"
+
+hpc:
+  scheduler: pbs
+
+  default_conf:
+    queue: short_cpuQ
+    mem: 100gb
+    cpus: 96
+    walltime: "00:05:00" 
+
+  configs:
+    - name: "hpc_{hpc_ncpus}cpus"
+      env:
+        - "OMP_NUM_THREADS={hpc_ncpus}"
+
+baldo:
+  scheduler: slurm
+
+  default_conf:
+    nodes: 1
+    ntasks: 1
+    time: "00:10:00" 
+    gpus: 0
+
+  configs:
+    - name: "baldo_edu_{baldo_ncpus}cpus"
+      partition: "edu-medium"
+      cpus_per_task: "{baldo_ncpus}"
+      env:
+        - "OMP_NUM_THREADS={baldo_ncpus}"
+
+    - name: "baldo_{baldo_ncpus}cpus"
+      partition: "medium"
+      account: "flavio.vella"
+      cpus_per_task: "{baldo_ncpus}"
+      env:
+        - "OMP_NUM_THREADS={baldo_ncpus}"
+
+    - name: "baldo_16cpus"
+      partition: "medium"
+      account: "flavio.vella"
+      gpus: 2
+      cpus_per_task: "16"
+      env:
+        - "OMP_NUM_THREADS={baldo_ncpus}"
+
+    - name: "baldo_32cpus"
+      partition: "medium"
+      account: "flavio.vella"
+      gpus: 3
+      cpus_per_task: "32"
+      env:
+        - "OMP_NUM_THREADS={baldo_ncpus}"
+
+    # Requesting 64 CPUs would require 6 GPUs
+
+
+local:
+  scheduler: local
+  configs:
+    - name: "pioneer_{pioneer_ncpus}cpus"
+      env:
+        - "OMP_NUM_THREADS={pioneer_ncpus}"
+
+    - name: "arriesgado_{arriesgado_ncpus}cpus"
+      env:
+        - "OMP_NUM_THREADS={arriesgado_ncpus}"
+
+    - name: "bananaf3_{bananaf3_ncpus}cpus"
+      env:
+        - "OMP_NUM_THREADS={bananaf3_ncpus}"

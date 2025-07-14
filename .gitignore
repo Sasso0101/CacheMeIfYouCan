@@ -3,5 +3,5 @@ build/
 .vscode/
 .cache/
 scripts/
-datasets/*
-!datasets/download_datasets.sh
+datasets/
+.venv/

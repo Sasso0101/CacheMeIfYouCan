@@ -1,4 +1,4 @@
-#include "graph.hpp"
+#include "implementation.hpp"
 #include <limits>
 
 #define DEGREE(vertex) merged_csr[vertex]
@@ -12,25 +12,25 @@ MergedCSR::~MergedCSR() { delete[] merged_csr; }
 
 // Create merged CSR from CSR
 void MergedCSR::create_merged_csr() {
-  merged_csr = new eidType[graph->M + 2 * graph->N];
-  merged_rowptr = new eidType[graph->N];
+  merged_csr = new eidType[graph->nnz + 2 * graph->nrows];
+  merged_rowptr = new eidType[graph->nrows];
   eidType merged_index = 0;
 
-  for (vidType i = 0; i < graph->N; i++) {
-    eidType start = graph->rowptr[i];
+  for (vidType i = 0; i < graph->nrows; i++) {
+    eidType start = graph->row_ptr[i];
     // Add degree to start of neighbor list
-    merged_csr[merged_index++] = graph->rowptr[i + 1] - graph->rowptr[i];
+    merged_csr[merged_index++] = graph->row_ptr[i + 1] - graph->row_ptr[i];
     // Initialize distance
     merged_csr[merged_index++] = std::numeric_limits<weight_type>::max();
     // Copy neighbors
-    for (eidType j = start; j < graph->rowptr[i + 1]; j++) {
-      merged_csr[merged_index++] = graph->rowptr[graph->col[j]] + 2 * graph->col[j];
+    for (eidType j = start; j < graph->row_ptr[i + 1]; j++) {
+      merged_csr[merged_index++] = graph->row_ptr[graph->col_idx[j]] + 2 * graph->col_idx[j];
     }
   }
   // Fix rowptr indices caused by adding the degree to the start of each
   // neighbor list
-  for (vidType i = 0; i <= graph->N; i++) {
-    merged_rowptr[i] = graph->rowptr[i] + 2 * i;
+  for (vidType i = 0; i <= graph->nrows; i++) {
+    merged_rowptr[i] = graph->row_ptr[i] + 2 * i;
   }
 }
 
@@ -38,7 +38,7 @@ void MergedCSR::create_merged_csr() {
 void MergedCSR::compute_distances(weight_type *distances,
                                   vidType source) const {
 #pragma omp parallel for simd schedule(static)
-  for (vidType i = 0; i < graph->N; i++) {
+  for (vidType i = 0; i < graph->nrows; i++) {
     distances[i] = DISTANCE(merged_rowptr[i]);
     // Reset distance for next BFS
     DISTANCE(merged_rowptr[i] + 1) = std::numeric_limits<weight_type>::max();

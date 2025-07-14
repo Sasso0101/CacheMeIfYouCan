@@ -1,4 +1,4 @@
-#include <graph.hpp>
+#include <implementation.hpp>
 #include <omp.h>
 
 #define VERTEX_ID(vertex) merged_csr[vertex]
@@ -13,35 +13,35 @@ MergedCSR_Parents::~MergedCSR_Parents() { delete[] merged_csr; }
 
 // Create merged CSR from CSR
 void MergedCSR_Parents::create_merged_csr() {
-  merged_csr = new eidType[graph->M + 3 * graph->N];
-  merged_rowptr = new eidType[graph->N];
+  merged_csr = new eidType[graph->nnz + 3 * graph->nrows];
+  merged_rowptr = new eidType[graph->nrows];
 
   vidType merged_index = 0;
-  for (vidType i = 0; i < graph->N; i++) {
-    vidType start = graph->rowptr[i];
+  for (vidType i = 0; i < graph->nrows; i++) {
+    vidType start = graph->row_ptr[i];
     // Add vertex ID to start of neighbor list
     merged_csr[merged_index++] = i;
     // Add parent ID to start of neighbor list (initialized to -1)
     merged_csr[merged_index++] = -1;
     // Add degree to start of neighbor list
-    merged_csr[merged_index++] = graph->rowptr[i + 1] - graph->rowptr[i];
+    merged_csr[merged_index++] = graph->row_ptr[i + 1] - graph->row_ptr[i];
     // Copy neighbors
-    for (vidType j = start; j < graph->rowptr[i + 1]; j++) {
+    for (vidType j = start; j < graph->row_ptr[i + 1]; j++) {
       merged_csr[merged_index++] =
-          graph->rowptr[graph->col[j]] + 3 * graph->col[j];
+          graph->row_ptr[graph->col_idx[j]] + 3 * graph->col_idx[j];
     }
   }
   // Fix rowptr indices by adding offset caused by adding the degree to the
   // start of each neighbor list
-  for (vidType i = 0; i <= graph->N; i++) {
-    merged_rowptr[i] = graph->rowptr[i] + 3 * i;
+  for (vidType i = 0; i <= graph->nrows; i++) {
+    merged_rowptr[i] = graph->row_ptr[i] + 3 * i;
   }
 }
 
 void MergedCSR_Parents::compute_parents(weight_type *parents,
                                         vidType source) const {
 #pragma omp parallel for simd schedule(static)
-  for (vidType i = 0; i < graph->N; i++) {
+  for (vidType i = 0; i < graph->nrows; i++) {
     parents[i] = merged_csr[merged_rowptr[i] + 1];
   }
 }

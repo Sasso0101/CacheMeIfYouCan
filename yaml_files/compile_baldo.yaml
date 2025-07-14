@@ -1,0 +1,11 @@
+sequential: true
+
+variables:
+  implname: ["mutex"]
+
+command: "module load CMake/3.29.3-GCCcore-13.3.0 && cmake -B build && make -j24 -C build BFS && mkdir -p targets && mv build/BFS targets/bfs_{implname} && echo \"Built: targets/bfs_{implname}\" || echo \"Something went wrong\""
+
+jobs:
+  - config: "baldo_2cpus"
+    config_jobs:
+      - tag: "compile"

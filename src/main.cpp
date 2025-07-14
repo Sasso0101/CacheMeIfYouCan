@@ -1,37 +1,48 @@
-#include "graph.hpp"
+#include "../distributed_mmio/include/mmio.h"
+#include "implementation.hpp"
+
 #include <algorithm>
 #include <limits>
 #include <omp.h>
 #include <string>
+#include <random>
 
 #define USAGE                                                                  \
-  "Usage: %s <schema> <source> <implementation> <check>\nRuns BFS "            \
-  "implementations. \n\nMandatory arguments:\n  <schema>\t path to JSON "      \
-  "schema of dataset \n  <source>\t : integer. Source vertex ID "              \
-  "('0' by default) \n  <algorithm>\t : 'merged_csr_parents', 'merged_csr', "  \
-  "'bitmap', 'classic', 'reference', 'heuristic' ('heuristic' by default) \n " \
-  " <check>\t : 'true', false'. Checks correctness of the result ('false' by " \
+  "Usage: %s <matrix> <runs> <implementation> <check>\n"                     \
+  "Runs BFS implementations. \n\n"                                             \
+  "Mandatory arguments:\n"                                                     \
+  "<matrix>\t path to matrix\n"                                                \
+  "<runs>\t : integer. Number of runs to execute ('1' by default) \n"                 \
+  "<algorithm>\t : 'merged_csr_parents', 'merged_csr', 'bitmap', 'classic', "  \
+  "'reference', 'heuristic' ('heuristic' by default) \n"                       \
+  "<check>\t : 'true', false'. Checks correctness of the result ('false' by "  \
   "default)\n"
 
-BFS_Impl *initialize_BFS(std::string filename, std::string algo_str) {
-  std::string path = "schemas/" + filename;
-  Graph *graph = new Graph(path);
+// Seed used for picking source vertices
+// Using same seed as in GAP benchmark for reproducible experiments
+// https://github.com/sbeamer/gapbs/blob/b5e3e19c2845f22fb338f4a4bc4b1ccee861d026/src/util.h#L22
+#define SEED 27491095
 
-  if (algo_str == "merged_csr_parents") {
-    return new MergedCSR_Parents(graph);
-  } else if (algo_str == "merged_csr") {
-    return new MergedCSR(graph);
-  } else if (algo_str == "bitmap") {
-    return new Bitmap(graph);
-  } else if (algo_str == "classic") {
-    return new Classic(graph);
-  } else if (algo_str == "reference") {
-    return new Reference(graph);
+BFS_Impl *initialize_BFS(const char *filename, std::string algorithm) {
+  Graph *csr_matrix =
+      Distr_MMIO_CSR_local_read<uint32_t, float>(filename, false, NULL);
+
+  if (algorithm == "merged_csr_parents") {
+    return new MergedCSR_Parents(csr_matrix);
+  } else if (algorithm == "merged_csr") {
+    return new MergedCSR(csr_matrix);
+  } else if (algorithm == "bitmap") {
+    return new Bitmap(csr_matrix);
+  } else if (algorithm == "classic") {
+    return new Classic(csr_matrix);
+  } else if (algorithm == "reference") {
+    return new Reference(csr_matrix);
   } else {
-    if ((float)(graph->M) / graph->N < 10) { // Graph diameter heuristic
-      return new MergedCSR(graph);
+    if ((float)(csr_matrix->nnz) / csr_matrix->nrows <
+        10) { // Graph diameter heuristic
+      return new MergedCSR(csr_matrix);
     } else {
-      return new Bitmap(graph);
+      return new Bitmap(csr_matrix);
     }
   }
 }
@@ -41,11 +52,15 @@ int main(const int argc, char **argv) {
     printf(USAGE, argv[0]);
     return 1;
   }
-  vidType source = 0;
+  vidType num_runs = 1;
   bool check = false;
 
   if (argc > 2) {
-    source = std::stoi(argv[2]);
+    num_runs = std::stoi(argv[2]);
+  }
+  std::string algorithm = "heuristic";
+  if (argc > 3) {
+    algorithm = argv[3];
   }
   if (argc > 4) {
     std::string check_str = argv[4];
@@ -57,25 +72,40 @@ int main(const int argc, char **argv) {
 #pragma omp parallel
   {
 #pragma omp master
-    { printf("Number of threads: %d\n", omp_get_num_threads()); }
+    {
+      printf("Number of threads: %d\n", omp_get_num_threads());
+    }
   }
-  double t_start = omp_get_wtime();
-  BFS_Impl *bfs = initialize_BFS(std::string(argv[1]), std::string(argv[3]));
-  double t_end = omp_get_wtime();
 
-  printf("Initialization: %f\n", t_end - t_start);
+  BFS_Impl *bfs = initialize_BFS(argv[1], algorithm);
 
-  weight_type *result = new weight_type[bfs->graph->N];
-  // Initialize result vector
-  std::fill_n(result, bfs->graph->N, std::numeric_limits<weight_type>::max());
+  weight_type *result = new weight_type[bfs->graph->nrows];
 
-  t_start = omp_get_wtime();
-  bfs->BFS(source, result);
-  t_end = omp_get_wtime();
+  // Random number generator for source picking
+  std::mt19937_64 rng(SEED); // Seed for reproducibility
+  std::uniform_int_distribution<vidType> udist(0, bfs->graph->nrows - 1);
+  double t_start, t_end;
 
-  printf("Runtime: %f\n", t_end - t_start);
+  for (int run = 0; run < num_runs; ++run) {
+    // Pick a random source vertex
+    vidType random_source;
+    do {
+      random_source = udist(rng);
+    } while (bfs->graph->row_ptr[random_source] == bfs->graph->row_ptr[random_source + 1]);
 
-  if (check) {
-    bfs->check_result(source, result);
+    // Initialize result vector
+    std::fill_n(result, bfs->graph->nrows, std::numeric_limits<weight_type>::max());
+
+    t_start = omp_get_wtime();
+    bfs->BFS(random_source, result);
+    t_end = omp_get_wtime();
+
+    printf("Runtime for run %d: %f\n", run + 1, t_end - t_start);
+
+    if (check) {
+      bfs->check_result(random_source, result);
+    }
   }
+  delete[] result;
+  return 0;
 }

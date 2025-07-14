@@ -1,11 +1,12 @@
 #pragma once
 #include <cstdint>
-#include <string>
 #include <vector>
+#include "../distributed_mmio/include/mmio.h"
 
 typedef uint32_t vidType;
 typedef uint32_t eidType;
 typedef uint32_t weight_type;
+typedef CSR_local<uint32_t, float> Graph;
 
 typedef enum { TOP_DOWN, BOTTOM_UP } Direction;
 
@@ -13,27 +14,6 @@ using frontier = std::vector<eidType>;
 
 #define ALPHA 4
 #define BETA 24
-
-// Graph class to store the graph representation in CSR format
-class Graph {
-private:
-  void construct_from_coo(std::vector<int64_t> &input_row,
-                          std::vector<int64_t> &input_col);
-  void construct_from_file(std::string &filename);
-  void generate_random_graph(int64_t num_vertices,
-                             int64_t num_edges_per_vertex);
-
-public:
-  eidType *rowptr;
-  vidType *col;
-  uint64_t N;
-  uint64_t M;
-
-  Graph(eidType *rowptr, vidType *col, uint64_t N, uint64_t M);
-  Graph(std::string &filename);
-  ~Graph();
-  void print_graph();
-};
 
 // Base class for BFS implementations
 class BFS_Impl {

@@ -1,14 +1,14 @@
-#include "graph.hpp"
+#include "implementation.hpp"
 #include <iostream>
 
 bool BFS_Impl::check_distances(vidType source,
                                const weight_type *distances) const {
   Reference ref_input(graph);
-  weight_type *ref_distances = new weight_type[graph->N];
-  std::fill(ref_distances, ref_distances + graph->N, -1);
+  weight_type *ref_distances = new weight_type[graph->nrows];
+  std::fill(ref_distances, ref_distances + graph->nrows, -1);
   ref_input.BFS(source, ref_distances);
   bool correct = true;
-  for (int64_t i = 0; i < graph->N; i++) {
+  for (int64_t i = 0; i < graph->nrows; i++) {
     if (distances[i] != ref_distances[i]) {
       std::cout << "Incorrect value for vertex " << i
                 << ", expected distance " + std::to_string(ref_distances[i]) +
@@ -21,22 +21,22 @@ bool BFS_Impl::check_distances(vidType source,
 
 bool BFS_Impl::check_parents(vidType source, const weight_type *parents) const {
   bool correct = true;
-  std::vector<vidType> depth(graph->N, -1);
+  std::vector<vidType> depth(graph->nrows, -1);
   std::vector<vidType> to_visit;
   depth[source] = 0;
   to_visit.push_back(source);
-  to_visit.reserve(graph->N);
+  to_visit.reserve(graph->nrows);
   // Run BFS to compute depth of each vertex
   for (auto it = to_visit.begin(); it != to_visit.end(); it++) {
     vidType i = *it;
-    for (int64_t v = graph->rowptr[i]; v < graph->rowptr[i + 1]; v++) {
-      if (depth[graph->col[v]] == -1) {
-        depth[graph->col[v]] = depth[i] + 1;
-        to_visit.push_back(graph->col[v]);
+    for (int64_t v = graph->row_ptr[i]; v < graph->row_ptr[i + 1]; v++) {
+      if (depth[graph->col_idx[v]] == -1) {
+        depth[graph->col_idx[v]] = depth[i] + 1;
+        to_visit.push_back(graph->col_idx[v]);
       }
     }
   }
-  for (int64_t i = 0; i < graph->N; i++) {
+  for (int64_t i = 0; i < graph->nrows; i++) {
     // Check if vertex is part of the BFS tree
     if (depth[i] != -1 && parents[i] != -1) {
       // Check if parent is correct
@@ -48,9 +48,9 @@ bool BFS_Impl::check_parents(vidType source, const weight_type *parents) const {
         continue;
       }
       bool parent_found = false;
-      for (int64_t j = graph->rowptr[i]; j < graph->rowptr[i + 1]; j++) {
-        if (graph->col[j] == parents[i]) {
-          vidType parent = graph->col[j];
+      for (int64_t j = graph->row_ptr[i]; j < graph->row_ptr[i + 1]; j++) {
+        if (graph->col_idx[j] == parents[i]) {
+          vidType parent = graph->col_idx[j];
           // Check if parent has correct depth
           if (depth[parent] != depth[i] - 1) {
             std::cout << "Wrong depth of child " + std::to_string(i) +
