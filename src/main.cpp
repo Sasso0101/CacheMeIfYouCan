@@ -4,18 +4,19 @@
 #include <algorithm>
 #include <limits>
 #include <omp.h>
-#include <string>
 #include <random>
+#include <string>
 
 #define USAGE                                                                  \
-  "Usage: %s <matrix> <runs> <implementation> <check>\n"                     \
+  "Usage: %s <matrix> <runs> <implementation> <check>\n"                       \
   "Runs BFS implementations. \n\n"                                             \
   "Mandatory arguments:\n"                                                     \
-  "<matrix>\t path to matrix\n"                                                \
-  "<runs>\t : integer. Number of runs to execute ('1' by default) \n"                 \
+  "<matrix>\t : path to matrix\n"                                              \
+  "<runs>\t\t : integer. Number of runs to execute (default: 1) \n"            \
   "<algorithm>\t : 'merged_csr_parents', 'merged_csr', 'bitmap', 'classic', "  \
-  "'reference', 'heuristic' ('heuristic' by default) \n"                       \
-  "<check>\t : 'true', false'. Checks correctness of the result ('false' by "  \
+  "'reference', 'heuristic' (default: 'heuristic') \n"                         \
+  "<check>\t\t : 'true', false'. Checks correctness of the result ('false' "   \
+  "by "                                                                        \
   "default)\n"
 
 // Seed used for picking source vertices
@@ -91,16 +92,18 @@ int main(const int argc, char **argv) {
     vidType random_source;
     do {
       random_source = udist(rng);
-    } while (bfs->graph->row_ptr[random_source] == bfs->graph->row_ptr[random_source + 1]);
+    } while (bfs->graph->row_ptr[random_source] ==
+             bfs->graph->row_ptr[random_source + 1]);
 
     // Initialize result vector
-    std::fill_n(result, bfs->graph->nrows, std::numeric_limits<weight_type>::max());
+    std::fill_n(result, bfs->graph->nrows,
+                std::numeric_limits<weight_type>::max());
 
     t_start = omp_get_wtime();
     bfs->BFS(random_source, result);
     t_end = omp_get_wtime();
 
-    printf("Runtime for run %d: %f\n", run + 1, t_end - t_start);
+    printf("run=%d,%f\n", run + 1, t_end - t_start);
 
     if (check) {
       bfs->check_result(random_source, result);

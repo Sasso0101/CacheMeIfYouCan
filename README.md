@@ -11,12 +11,11 @@ The project requires a C++17 compiler. The project has been tested with g++ 12.2
 Clone the repository and run the following commands in the project's root directory:
 ```bash
 cmake -B build
-cmake --build build
+make -C build BFS
 ```
-
-Before running the project, the datasets must be downloaded. This can be done by running the following command in the project's root directory:
+Download the suggested datasets using MtxMan:
 ```bash
-./datasets/download_datasets.sh
+mtxman sync yaml_files/matrices.yaml
 ```
 
 ## Running
@@ -27,31 +26,10 @@ To run the project, run the following command in the project's root directory:
 Arguments:
   | Argument   | Description |
   |------------|-----------------------------------------------------------------------------|
-  | `<schema>` | Filename of the dataset schema. See the [Datasets](#datasets) section for more details about the available datasets. |
-  | `<source>` | Integer. Source vertex of the BFS (`0` by default) |
+  | `<matrix>` | Filename of matrix (in .mtx or .bmtx format). |
+  | `<runs>` | Integer. Number of runs to execute (default: 1) |
   | `<algorithm>` | Implementation used to perform the BFS. One of `merged_csr_parents`, `merged_csr`, `bitmap`, `classic`, `reference` or `heuristic` (`heuristic` by default). See the paper for more details on the implementations. |
   | `<check>`  | `true` or `false`. Checks correctness of the result using a simple single-threaded implementation. (`false` by default) |
-
-## Testing
-
-To run the tests, run the following command in the project's root directory:
-```bash
-ctest --test-dir build/tests
-```
-Each test is a BFS run on a small dataset with a different implementation. The test checks the correctness of the result by comparing it with the reference implementation.
-
-## Datasets
-The datasets used are provided by the [PPoPP'25 FastCode Challenge](https://fastcode.org/events/fastcode-challenge/spe4ic/#dataset-diversity). Note that they weight several gigabytes in total, so they may take a while to download.
-|        Graph Name       | \|V\| |  \|E\| |      Notes     | Filename |
-|-------------------------|:-----:|:------:|:--------------:|----------|
-| Social_Network_1        | 4.9M  | 85.8M  | Small diameter | Social_Network_1.json |
-| Web_Graph_1             | 6.6M  | 300M   | Small diameter | Web_Graph_1.json |
-| Collaboration_Network_1 | 1.1M  | 113M   | Small diameter | Collaboration_Network_1.json |
-| Synthetic_Dense_1       | 10M   | 1B     | Small diameter | Synthetic_Dense_1.json |
-| Road_Network_1          | 22.1M | 30.0M  | Large diameter | Road_Network_1.json |
-| Road_Network_2          | 87.0M | 112.9M | Large diameter | Road_Network_2.json |
-| kNN_Graph_1             | 24.9M | 158M   | Large diameter | kNN_Graph_1.json |
-| Synthetic_Sparse_1      | 10M   | 40M    | Large diameter | Synthetic_Sparse_1.json |
 
 ## Acknowledgements
 This work was partially supported by the EuroHPC JU project within Net4Exa project under grant agreement No 101175702.

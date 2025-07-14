@@ -11,6 +11,6 @@ variables:
 jobs:
   - config: "baldo_{baldo_ncpus}cpus"
     preprocess: "module load GCCcore/13.3.0 && export OMP_NUM_THREADS={baldo_ncpus}"
-    command: "./targets/bfs_{implname} {mtx} {n}"
+    command: "./targets/bfs_{implname} {mtx} {n} merged_csr"
     config_jobs:
       - tag: "{implname}"
