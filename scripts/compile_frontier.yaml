@@ -1,0 +1,11 @@
+sequential: true
+
+variables:
+  clean: ["mkdir -p targets && make clean"]
+
+jobs:
+  - config: "32_cpus"
+    config_jobs:
+      - tag: "compile_frontiers"
+        command: "cd openmp && {clean} && make FRONTIER_DEBUG=1 -j16 bin/bfs"
+        postprocess: "mv bin/bfs targets/bfs_frontiers"

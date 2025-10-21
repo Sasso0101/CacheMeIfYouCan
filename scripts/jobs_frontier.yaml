@@ -1,0 +1,13 @@
+# Collects frontier sizes for plotting
+
+variables:
+  ncpus: [1]
+  mtx: "datasets/matrices_list.txt"
+  n: [1]
+
+jobs:
+  - config: "{ncpus}_cpus"
+    cluster_name: "local"
+    config_jobs:
+      - tag: "openmp_{ncpus}cpus"
+        command: "OMP_NUM_THREADS={ncpus} openmp/targets/bfs_frontiers {mtx} {n} reference"

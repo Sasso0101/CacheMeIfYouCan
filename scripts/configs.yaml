@@ -1,0 +1,55 @@
+variables:
+  ncpus: [1, 2, 4, 8, 16, 32]
+  
+hca:
+  scheduler: slurm
+  default_conf:
+    nodes: 1
+    ntasks: 1
+    exclusive: true
+    time: "00:10:00" 
+  configs:
+    - name: "{ncpus}_cpus"
+      partition: "pioneer"
+      cpus_per_task: "{ncpus}"
+      exclude:
+        - pioneer-1
+        - pioneer-2
+      env:
+        - "OMP_NUM_THREADS={ncpus}"
+
+local:
+  scheduler: local
+  configs:
+    - name: "{ncpus}_cpus"
+      env:
+        - "OMP_NUM_THREADS={ncpus}"
+
+hpc:
+  scheduler: pbs
+  default_conf:
+    queue: short_cpuQ
+    mem: 100gb
+    cpus: 96
+    walltime: "00:05:00" 
+  configs:
+    - name: "96_cpus"
+    - name: "96_cpus_papi"
+      env:
+        - "PAPI_DIR=/home/salvatore.andaloro/papi/src/install"
+        - "PATH=/home/salvatore.andaloro/papi/src/install/bin:$PATH"
+        - "LD_LIBRARY_PATH=/home/salvatore.andaloro/papi/src/install/lib:$LD_LIBRARY_PATH"
+
+thea:
+  scheduler: slurm
+  default_conf:
+    nodes: 1
+    ntasks: 1
+    time: "00:10:00" 
+    gpus: 0
+  configs:
+    - name: "{ncpus}_cpus"
+      partition: "gg"
+      cpus_per_task: "{ncpus}"
+      env:
+        - "OMP_NUM_THREADS={ncpus}"

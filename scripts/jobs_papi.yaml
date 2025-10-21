@@ -1,0 +1,15 @@
+variables:
+  ncpus: [1, 2, 4, 8, 16, 32]
+  mtx: "datasets/large_diameter/matrices_list.txt"
+  n: [128]
+
+jobs:
+  - config: "96_cpus_papi"
+    preprocess: "module load cmake-3.15.4 gcc91"
+    config_jobs:
+      - tag: "gapbs_{ncpus}cpus_papi"
+        command: "OMP_NUM_THREADS={ncpus} PAPI_OUTPUT_DIRECTORY=\"papi/gapbs_{ncpus}cpus_{mtx}\" PAPI_EVENTS=\"PAPI_L3_TCA,PAPI_L3_TCM\" gapbs/targets/bfs_papi -f {mtx} -n {n}"
+      - tag: "openmp_{ncpus}cpus_papi"
+        command: "OMP_NUM_THREADS={ncpus} PAPI_OUTPUT_DIRECTORY=\"papi/openmp_{ncpus}cpus_{mtx}\" PAPI_EVENTS=\"PAPI_L3_TCA,PAPI_L3_TCM\" openmp/targets/bfs_papi {mtx} {n} merged_csr_distances"
+      - tag: "pthreads_{ncpus}cpus_papi"
+        command: "OMP_NUM_THREADS={ncpus} PAPI_OUTPUT_DIRECTORY=\"papi/pthreads_{ncpus}cpus_{mtx}\" PAPI_EVENTS=\"PAPI_L3_TCA,PAPI_L3_TCM\" pthreads/targets/bfs_{ncpus}_papi -f {mtx} -n {n}"

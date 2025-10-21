@@ -1,0 +1,21 @@
+path: ./datasets
+
+large_diameter:
+  suite_sparse_matrix_list:
+    - GAP/GAP-road
+    - DIMACS10/europe_osm
+    - DIMACS10/asia_osm
+    - DIMACS10/rgg_n_2_22_s0
+    - Janna/Hook_1498
+    - Janna/Geo_1438
+    - Janna/PFlow_742
+
+# small_diameter:
+#   suite_sparse_matrix_list:
+#     - GAP/GAP-web
+#     - LAW/hollywood-2009
+#     - Gleich/wikipedia-20070206
+
+test:
+  suite_sparse_matrix_list:
+    - Pajek/Stranke94

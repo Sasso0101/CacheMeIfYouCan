@@ -1,0 +1,29 @@
+variables:
+  pioneer_ncpus: [1, 2, 4, 8, 16, 32, 64]
+  bananaf3_ncpus: [1, 2, 4, 8]
+  arriesgado_ncpus: [1, 2, 4]
+
+  chunksize: [4, 8, 16, 32, 64, 256, 1024, 4096]
+
+  mtx:
+    - "../datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx"
+    - "../datasets/large_diameter/DIMACS10/rgg_n_2_22_s0/rgg_n_2_22_s0.bmtx"
+    - "../datasets/large_diameter/DIMACS10/europe_osm/europe_osm.bmtx"
+  n: [15]
+  implname: ["mutex"]
+
+jobs:
+  - config: "pioneer_{pioneer_ncpus}cpus"
+    command: "./targets/bfs_{implname}_chunksize{chunksize}_{pioneer_ncpus}cpus -f {mtx} -n {n}"
+    config_jobs:
+      - tag: "{implname}_chunksize_{chunksize}"
+
+  - config: "arriesgado_{arriesgado_ncpus}cpus"
+    command: "./targets/bfs_{implname}_chunksize{chunksize}_{arriesgado_ncpus}cpus -f {mtx} -n {n}"
+    config_jobs:
+      - tag: "{implname}_chunksize_{chunksize}"
+
+  - config: "bananaf3_{bananaf3_ncpus}cpus"
+    command: "./targets/bfs_{implname}_chunksize{chunksize}_{bananaf3_ncpus}cpus -f {mtx} -n {n}"
+    config_jobs:
+      - tag: "{implname}_chunksize_{chunksize}"

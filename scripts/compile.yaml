@@ -1,0 +1,33 @@
+sequential: true
+
+variables:
+  ncpus: [1, 2, 4, 8, 16, 32]
+  chunksize: [32, 64, 256, 1024, 4096]
+  clean: ["mkdir -p targets && make clean"]
+
+jobs:
+  - config: "32_cpus"
+    config_jobs:
+      - tag: "compile_pthreads"
+        command: "cd pthreads && {clean} && CHUNK_SIZE={chunksize} MAX_THREADS={ncpus} make -j16 bin/bfs"
+        postprocess: "mv bin/bfs targets/bfs_chunksize{chunksize}_{ncpus}cpus"
+      - tag: "compile_openmp"
+        command: "cd pthreads && {clean} && make -j16 bin/bfs"
+        postprocess: "mv bin/bfs targets/bfs_frontiers"
+      - tag: "compile_gapbs"
+        command: "cd pthreads && {clean} && make -j16 bfs"
+        postprocess: "mv bfs targets/bfs"
+
+# - config: "32_cpus"
+#   cluster_name: hca
+#   preprocess: "module load llvm/EPI-development && module load cmake/3.28.1"
+#   config_jobs:
+#   - tag: "compile_pthreads"
+#     command: "{compile_pthreads} && CHUNK_SIZE={chunksize} MAX_THREADS={ncpus} CC=clang CXX=clang++ make -j16 bin/bfs"
+#     postprocess: "{postprocess_pthreads}"
+#   - tag: "compile_openmp"
+#     command: "CC=clang CXX=clang++ {compile_openmp} && make -j16 bin/bfs"
+#     postprocess: "{postprocess_openmp}"
+#   - tag: "compile_gapbs"
+#     command: "CC=clang CXX=clang++ {compile_gapbs} && make -j16 bfs"
+#     postprocess: "{postprocess_gapbs}"

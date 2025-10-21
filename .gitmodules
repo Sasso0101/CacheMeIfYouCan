@@ -1,0 +1,6 @@
+[submodule "distributed_mmio"]
+	path = distributed_mmio
+	url = git@github.com:HicrestLaboratory/distributed_mmio.git
+[submodule "gapbs"]
+	path = gapbs
+	url = https://github.com/sasso0101/gapbs.git

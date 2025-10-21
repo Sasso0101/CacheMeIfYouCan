@@ -1,0 +1,17 @@
+# Run all BFS implementations with various configurations
+
+variables:
+  ncpus: [1, 2, 4, 8, 16, 32]
+  chunksize: [4, 8, 16, 32, 64, 256, 1024, 4096]
+  mtx: "datasets/large_diameter/matrices_list.txt"
+  n: [32]
+
+jobs:
+  - config: "{ncpus}_cpus"
+    config_jobs:
+      - tag: "pthreads_chunksize{chunksize}_{ncpus}cpus"
+        command: "./pthreads/targets/bfs_chunksize{chunksize}_{ncpus}cpus -f {mtx} -n {n}"
+      - tag: "openmp_{ncpus}cpus"
+        command: "OMP_NUM_THREADS={ncpus} openmp/targets/bfs {mtx} {n} merged_csr_distances"
+      - tag: "gapbs_{ncpus}cpus"
+        command: "OMP_NUM_THREADS={ncpus} gapbs/targets/bfs -f {mtx} -n {n}"

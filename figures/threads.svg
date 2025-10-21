@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   sodipodi:docname="threads.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#999999"
+     borderopacity="1"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.79747924"
+     inkscape:cx="249.53628"
+     inkscape:cy="184.95779"
+     inkscape:window-width="1440"
+     inkscape:window-height="847"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="Triangle-1"
+       refX="3"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="2"
+       markerHeight="2"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135-3" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#ffd780;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.250404;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:1"
+       id="rect1-5-7"
+       width="29.611301"
+       height="14.372492"
+       x="11.914966"
+       y="39.366795"
+       ry="3.4493976"
+       inkscape:export-filename="parallelization_merged.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;line-height:1;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;letter-spacing:-0.0132292px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.3;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:1"
+       x="90.077652"
+       y="38.119068"
+       id="text4-6"><tspan
+         sodipodi:role="line"
+         id="tspan4-5"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.3"
+         x="90.071037"
+         y="38.119068">...</tspan></text>
+    <path
+       style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Triangle-1)"
+       d="M 56.521447,22.934447 26.720617,39.366795"
+       id="path6-7"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       inkscape:connection-start="#rect1-1" />
+    <path
+       style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Triangle-1)"
+       d="M 79.847813,22.934447 115.27753,39.366795"
+       id="path7-1"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       inkscape:connection-start="#rect1-1" />
+    <path
+       style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Triangle-1)"
+       d="M 67.029333,22.934447 66.61624,39.241593"
+       id="path8-3"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       inkscape:connection-start="#rect1-1" />
+    <rect
+       style="fill:#e0fedc;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.306381;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:1"
+       id="rect1-56-4"
+       width="47.555538"
+       height="13.397621"
+       x="43.480572"
+       y="71.361"
+       ry="3.2154291" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;line-height:1;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;letter-spacing:-0.0132292px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;white-space:pre-wrap;shape-inside:url(#rect1-56-4);display:inline;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.3;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:1"
+       x="53.457104"
+       y="21.821007"
+       id="text3-3-8"
+       transform="translate(-0.250569,4.58132)"><tspan
+         x="53.564175"
+         y="75.249866"
+         id="tspan4"><tspan
+           style="stroke:none"
+           id="tspan3">Merge step</tspan></tspan></text>
+    <path
+       style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Triangle-1)"
+       d="M 26.720617,53.739288 56.092687,71.361"
+       id="path11-5"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       inkscape:connection-end="#rect1-56-4" />
+    <path
+       style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Triangle-1)"
+       d="M 66.61624,53.864488 67.080566,71.361"
+       id="path12-0"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       inkscape:connection-end="#rect1-56-4" />
+    <path
+       style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Triangle-1)"
+       d="M 115.27753,53.739288 80.484679,71.361"
+       id="path13-6"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       inkscape:connection-end="#rect1-56-4" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;line-height:1;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;letter-spacing:-0.0132292px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;white-space:pre-wrap;shape-inside:url(#rect1-5-7-0);display:inline;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.3;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:1"
+       x="7.3298659"
+       y="21.821007"
+       id="text3-4-51-1"
+       transform="translate(-0.158663,2.21155)" />
+    <rect
+       style="fill:#f4f4f4;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.322624;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-dasharray:none;stroke-opacity:1"
+       id="rect1-1"
+       width="60.263489"
+       height="11.752376"
+       x="37.046444"
+       y="11.182072"
+       ry="2.82057" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.58611px;line-height:1.2;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;letter-spacing:-0.0132292px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;white-space:pre-wrap;shape-inside:url(#rect1-1);display:inline;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.3;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:1"
+       x="53.457104"
+       y="21.821007"
+       id="text3-7"
+       transform="translate(0.07337316,3.0881104)"><tspan
+         x="42.689774"
+         y="15.251035"
+         id="tspan6"><tspan
+           style="stroke:none"
+           id="tspan5">Current Frontier (TD)</tspan></tspan></text>
+    <rect
+       style="fill:#f4f4f4;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.306381;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:1"
+       id="rect1-56-4-3"
+       width="47.555538"
+       height="13.397621"
+       x="43.480572"
+       y="91.038033"
+       ry="3.2154291" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;line-height:1;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;letter-spacing:-0.0132292px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;white-space:pre-wrap;shape-inside:url(#rect1-56-4-3);display:inline;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.3;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:1"
+       x="53.457104"
+       y="21.821007"
+       id="text3-3-8-9"
+       transform="translate(-0.251209,1.7195)"><tspan
+         x="51.006053"
+         y="94.925647"
+         id="tspan8"><tspan
+           style="stroke:none"
+           id="tspan7">Next Frontier
+</tspan></tspan><tspan
+         x="55.586309"
+         y="99.864536"
+         id="tspan10"><tspan
+           style="stroke:none"
+           id="tspan9">(merged)</tspan></tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Triangle-1)"
+       d="m 67.258341,84.758621 v 6.279412"
+       id="path23"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       inkscape:connection-start="#rect1-56-4"
+       inkscape:connection-end="#rect1-56-4-3" />
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;line-height:1.2;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Normal';text-align:center;letter-spacing:0.0926042px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;opacity:0.821239;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#070707;stroke-width:0.3;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:0.831373"
+       x="26.654469"
+       y="44.923206"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3"
+         x="26.654469"
+         y="44.923206">Thread 1</tspan><tspan
+         sodipodi:role="line"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3"
+         x="26.700771"
+         y="51.273209"
+         id="tspan2">[0, |F|/3)</tspan></text>
+    <rect
+       style="fill:#ffd780;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.250404;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:1"
+       id="rect1-5-7-3"
+       width="29.611301"
+       height="14.372492"
+       x="51.810589"
+       y="39.366795"
+       ry="3.4493976"
+       inkscape:export-filename="parallelization_merged.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300" />
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;line-height:1.2;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Normal';text-align:center;letter-spacing:0.0926042px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;opacity:0.821239;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#070707;stroke-width:0.3;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:0.831373"
+       x="66.550095"
+       y="44.923206"
+       id="text1-0"><tspan
+         sodipodi:role="line"
+         id="tspan1-6"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3"
+         x="66.550095"
+         y="44.923206">Thread 2</tspan><tspan
+         sodipodi:role="line"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3"
+         x="66.596397"
+         y="51.273209"
+         id="tspan2-2">[2|F|/3, |F|/3)</tspan></text>
+    <rect
+       style="fill:#ffd780;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.250404;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:1"
+       id="rect1-5-7-9"
+       width="29.611301"
+       height="14.372492"
+       x="100.47188"
+       y="39.366795"
+       ry="3.4493976"
+       inkscape:export-filename="parallelization_merged.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300" />
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;line-height:1.2;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Normal';text-align:center;letter-spacing:0.0926042px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;opacity:0.821239;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#070707;stroke-width:0.3;stroke-linejoin:bevel;stroke-miterlimit:1.87;stroke-opacity:0.831373"
+       x="115.21139"
+       y="44.923206"
+       id="text1-5"><tspan
+         sodipodi:role="line"
+         id="tspan1-62"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3"
+         x="115.21139"
+         y="44.923206">Thread 1</tspan><tspan
+         sodipodi:role="line"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3"
+         x="115.25769"
+         y="51.273209"
+         id="tspan2-8">[0, |F|/3)</tspan></text>
+  </g>
+</svg>
